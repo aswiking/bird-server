@@ -1,4 +1,5 @@
 import express from "express";
+import cuid from "cuid";
 
 const router = express.Router();
 
@@ -24,6 +25,53 @@ let birds = [
 
 router.get("/api/birds", (req, res) => {
   res.status(200).json(birds);
+});
+
+router.post("/api/birds", (req, res) => {
+  const bird = {
+    id: cuid(),
+    name: req.body.name,
+    scientific: req.body.scientific,
+    location: req.body.location,
+    date: req.body.date,
+    image: req.body.image,
+  };
+
+  birds.push(bird);
+  res.status(201).json(bird);
+});
+
+router.put("/api/birds/:id", (req, res) => {
+
+  if(req.params.id !== req.body.id) {
+    throw {
+      status: 400,
+      messages: ["ID in url must match id in body"]
+    }
+  }
+
+  const updatedBird = {
+    id: req.body.id,
+    name: req.body.name,
+    scientific: req.body.scientific,
+    location: req.body.location,
+    date: req.body.date,
+    image: req.body.image,
+  };
+
+const index = birds.findIndex(bird => req.body.id === bird.id);
+
+if (index === -1) {
+  throw {
+    status: 404,
+    messages: ["There is no bird with this ID"]
+  }
+}
+
+  bird[index] = updatedBird;
+
+  res.status(200), json(updatedBird);
+
 });
 
 export default router;
