@@ -43,11 +43,11 @@ router.post("/api/birds", (req, res) => {
 
 router.put("/api/birds/:id", (req, res) => {
 
-  if(req.params.id !== req.body.id) {
+  if (Number(req.params.id) !== req.body.id) {
     throw {
       status: 400,
-      messages: ["ID in url must match id in body"]
-    }
+      messages: ["ID in url must match id in body"],
+    };
   }
 
   const updatedBird = {
@@ -59,19 +59,37 @@ router.put("/api/birds/:id", (req, res) => {
     image: req.body.image,
   };
 
-const index = birds.findIndex(bird => req.body.id === bird.id);
+  const index = birds.findIndex((bird) => req.body.id === bird.id);
 
-if (index === -1) {
-  throw {
-    status: 404,
-    messages: ["There is no bird with this ID"]
+  if (index === -1) {
+    throw {
+      status: 404,
+      messages: ["There is no bird with this ID"],
+    };
   }
-}
 
-  bird[index] = updatedBird;
+  birds[index] = updatedBird;
 
-  res.status(200), json(updatedBird);
-
+  res.status(200).json(updatedBird);
 });
+
+router.delete("/api/birds/:id", (req, res) => {
+  if (req.body.id !== Number(req.params.id)) {
+    throw {
+      status: 400,
+      messages: ["ID in body must match ID in url"]
+    }
+  }
+  if (!birds.find(bird => bird.id === req.body.id)) {
+    throw {
+      status: 404,
+      messages: ["There is no bird with this ID"]
+    }
+  }
+
+  birds = birds.filter(bird => bird.id !== req.body.id);
+
+  res.status(204).send();
+})
 
 export default router;
