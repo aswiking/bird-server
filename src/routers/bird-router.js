@@ -1,5 +1,7 @@
 import express from "express";
 import cuid from "cuid";
+import validateSchema from "../validate-schema.js";
+import {birdPostSchema, birdPutSchema} from '../schema/bird-schema.js';
 
 const router = express.Router();
 
@@ -27,23 +29,26 @@ router.get("/api/birds", (req, res) => {
   res.status(200).json(birds);
 });
 
-router.post("/api/birds", (req, res) => {
+router.post("/api/birds", validateSchema(birdPostSchema), (req, res) => {
+
   const bird = {
     id: cuid(),
-    name: req.body.name,
-    scientific: req.body.scientific,
-    location: req.body.location,
-    date: req.body.date,
-    image: req.body.image,
+    name: req.validatedBody.name,
+    scientific: req.validatedBody.scientific,
+    location: req.validatedBody.location,
+    date: req.validatedBody.date,
+    image: req.validatedBody.image
   };
 
   birds.push(bird);
   res.status(201).json(bird);
 });
 
-router.put("/api/birds/:id", (req, res) => {
+router.put("/api/birds/:id", validateSchema(birdPutSchema), (req, res) => {
+  console.log(req.params.id)
+  console.log(req.validatedBody.id)
 
-  if (Number(req.params.id) !== req.body.id) {
+  if (Number(req.params.id) !== (req.validatedBody.id)) {
     throw {
       status: 400,
       messages: ["ID in url must match id in body"],
@@ -51,12 +56,12 @@ router.put("/api/birds/:id", (req, res) => {
   }
 
   const updatedBird = {
-    id: req.body.id,
-    name: req.body.name,
-    scientific: req.body.scientific,
-    location: req.body.location,
-    date: req.body.date,
-    image: req.body.image,
+    id: req.validatedBody.id,
+    name: req.validatedBody.name,
+    scientific: req.validatedBody.scientific,
+    location: req.validatedBody.location,
+    date: req.validatedBody.date,
+    image: req.validatedBody.image,
   };
 
   const index = birds.findIndex((bird) => req.body.id === bird.id);
