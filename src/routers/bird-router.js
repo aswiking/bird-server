@@ -58,14 +58,9 @@ router.post("/api/birds", validateSchema(birdPostSchema), wrapAsync(async (req, 
   res.status(201).json(birds[0]);
 }));
 
-router.put("/api/birds/:id", validateSchema(birdPutSchema), wrapAsync((req, res) => {
+router.put("/api/birds/:id", validateSchema(birdPutSchema), wrapAsync( async (req, res) => {
 
-  if (req.params.id !== req.validatedBody.id) {
-    throw {
-      status: 400,
-      messages: ["ID in url must match id in body"],
-    };
-  }
+
 
   const updatedBird = {
     id: req.validatedBody.id,
@@ -76,18 +71,29 @@ router.put("/api/birds/:id", validateSchema(birdPutSchema), wrapAsync((req, res)
     image: req.validatedBody.image,
   };
 
-  const index = birds.findIndex((bird) => req.body.id === bird.id);
+  if (req.params.id !== req.validatedBody.id) {
+    throw {
+      status: 400,
+      messages: ["ID in url must match id in body"],
+    };
+  }
 
-  if (index === -1) {
+  const {rows: birds, rowCount: deleted} = await db.query(
+    `UPDATE birds
+    SET name = ($1), scientific = ($2), location = ($3), date = ($4), image = ($5)
+    WHERE id = ($6)
+    RETURNING id, name, scientific, location, date, image`,
+    [req.validatedBody.name, req.validatedBody.scientific, req.validatedBody.location, req.validatedBody.date, req.validatedBody.image, req.validatedBody.id]
+  )
+
+  if (deleted === 0) {
     throw {
       status: 404,
       messages: ["There is no bird with this ID"],
     };
   }
 
-  birds[index] = updatedBird;
-
-  res.status(200).json(updatedBird);
+  res.status(200).json(birds);
 }));
 
 router.delete("/api/birds/:id", wrapAsync(async (req, res) => {
