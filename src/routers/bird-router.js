@@ -1,6 +1,8 @@
 import express from "express";
 import cuid from "cuid";
 import validateSchema from "../validate-schema.js";
+import db from "../db.js";
+import wrapAsync from "../wrap-async.js";
 import { birdPostSchema, birdPutSchema } from "../schema/bird-schema.js";
 
 const router = express.Router();
@@ -25,11 +27,14 @@ let birds = [
   },
 ];
 
-router.get("/api/birds", (req, res) => {
+router.get("/api/birds", async (req, res) => {
+  const { rows: birds } = await db.query(
+    "SELECT id, name, scientific, location, date, image FROM birds"
+  );
   res.status(200).json(birds);
 });
 
-router.post("/api/birds", validateSchema(birdPostSchema), (req, res) => {
+router.post("/api/birds", validateSchema(birdPostSchema), wrapAsync(async (req, res) => {
   const bird = {
     id: cuid(),
     name: req.validatedBody.name,
@@ -39,13 +44,21 @@ router.post("/api/birds", validateSchema(birdPostSchema), (req, res) => {
     image: req.validatedBody.image,
   };
 
-  birds.push(bird);
-  res.status(201).json(bird);
-});
+  const {rows: birds} = await db.query(
+    `INSERT INTO birds (
+      name, scientific, location, date, image
+    ) VALUES (
+      $1, $2, $3, $4, $5
+    ) RETURNING
+      id, name, scientific, location, date, image
+    `,
+    [bird.name, bird.scientific, bird.location, bird.date, bird.image]
+  );
 
-router.put("/api/birds/:id", validateSchema(birdPutSchema), (req, res) => {
-  console.log(req.params.id);
-  console.log(req.validatedBody.id);
+  res.status(201).json(birds[0]);
+}));
+
+router.put("/api/birds/:id", validateSchema(birdPutSchema), wrapAsync((req, res) => {
 
   if (req.params.id !== req.validatedBody.id) {
     throw {
@@ -75,19 +88,23 @@ router.put("/api/birds/:id", validateSchema(birdPutSchema), (req, res) => {
   birds[index] = updatedBird;
 
   res.status(200).json(updatedBird);
-});
+}));
 
-router.delete("/api/birds/:id", (req, res) => {
-  if (!birds.find((bird) => bird.id === req.params.id)) {
+router.delete("/api/birds/:id", wrapAsync(async (req, res) => {
+  const {rowCount: deleted} = await db.query(
+    `DELETE FROM birds 
+    WHERE id = ($1)`,
+    [req.params.id]
+  );
+  
+  if (deleted === 0) {
     throw {
       status: 404,
       messages: ["There is no bird with this ID"],
     };
   }
 
-  birds = birds.filter((bird) => bird.id !== req.params.id);
-
   res.status(204).send();
-});
+}));
 
 export default router;
