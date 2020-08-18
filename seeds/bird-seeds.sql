@@ -1,5 +1,32 @@
-INSERT INTO birds
-    (name, scientific, location, date, image)
+INSERT INTO groups
+    (id, name)
 VALUES
-    ('wren', 'Troglodytes troglodytes', 'Leicester', '2020-02-10', 'https://www.rspb.org.uk/globalassets/images/wildlife/birds/wren/1048586_wren.jpg'),
-    ('goldfinch', 'Carduelis carduelis', 'Leicester', '2020-06-18', 'https://test.cdn.download.ams.birds.cornell.edu/api/v1/asset/44592631/1200')
+    (1, 'Ducks, geese and swans'),
+    (2, 'Grouse'),
+    (3, 'Pheasants, partridges and quail');
+
+
+
+INSERT INTO birds
+    (id, common, scientific, group_id)
+VALUES
+    (1, 'Greater Canada goose', 'Branta canadensis', 1),
+    (2, 'Greylag goose', 'Anser anser', 1),
+    (3, 'Mute Swan', 'Cygnus olor', 1),
+    (4, 'Red Grouse', 'Lagopus lagopus scotica', 2);
+
+
+INSERT INTO sightings
+    (bird_id, user_id, datetime, lat, lng, notes)
+VALUES
+    (1, 1, '2020-06-22', 52.617473, -1.077948, 'Shady Lane Arboretum');
+
+
+
+INSERT INTO photos
+    (id, sighting_id, instagram_media_id)
+VALUES
+    (1, 1, '101050178_277109030249242_4401003732908096273')
+
+
+

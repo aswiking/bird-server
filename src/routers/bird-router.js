@@ -6,18 +6,20 @@ import { birdPostSchema, birdPutSchema } from "../schema/bird-schema.js";
 
 const router = express.Router();
 
+/*
 function serializeBird(bird) {
   return {
     ...bird,
-    date: bird.date.toISOString().slice(0,10)
+    date: bird.date.toISOString().slice(0,10) //I'm guessing this will have to be changed
   }
 }
+*/
 
-router.get("/api/birds", async (req, res) => {
-  const { rows: birds } = await db.query(
-    "SELECT id, name, scientific, location, date, image FROM birds"
+router.get("/api/sightings", async (req, res) => {
+  const { rows: sightings } = await db.query(
+    "SELECT id, bird_id, user_id, datetime, lat, lng, notes image FROM sightings"
   );
-  res.status(200).json(birds.map(serializeBird));
+  res.status(200).json(sightings);
 });
 
 router.post(

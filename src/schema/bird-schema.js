@@ -13,7 +13,7 @@ const birdPostSchema = Joi.object({
 
 const birdPutSchema = birdPostSchema.keys(
     {
-        id: Joi.string().required()
+        id: Joi.number().required()
     }
 );
 
