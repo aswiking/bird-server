@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.get("/api/sightings", async (req, res) => {
   const { rows: sightings } = await db.query(
-    "SELECT id, bird_id, user_id, datetime, lat, lng, notes image FROM sightings"
+    "SELECT id, bird_id, user_id, datetime, lat, lng, notes FROM sightings"
   );
   res.status(200).json(sightings);
 });
@@ -44,28 +44,28 @@ router.post(
 );
 
 router.put(
-  "/api/birds/:id",
-  validateSchema(birdPutSchema),
+  "/api/sightings/:sighting_id",
+  validateSchema(sightingsPutSchema),
   wrapAsync(async (req, res) => {
-    if (Number(req.params.id) !== req.validatedBody.id) {
+    if (Number(req.params.sighting_id) !== req.validatedBody.id) {
       throw {
         status: 400,
         messages: ["ID in url must match id in body"],
       };
     }
 
-    const { rows: birds, rowCount: updatedCount } = await db.query(
-      `UPDATE birds
-    SET name = ($1), scientific = ($2), location = ($3), date = ($4), image = ($5)
+    const { rows: sightings, rowCount: updatedCount } = await db.query(
+      `UPDATE sightings
+    SET bird_id = ($1), datetime = ($2), lat = ($3), lng = ($4), notes = ($5)
     WHERE id = ($6)
-    RETURNING id, name, scientific, location, date, image`,
+    RETURNING bird_id, datetime, lat, lng, notes`,
       [
-        req.validatedBody.name,
-        req.validatedBody.scientific,
-        req.validatedBody.location,
-        req.validatedBody.date,
-        req.validatedBody.image,
-        req.validatedBody.id,
+        req.validatedBody.bird_id,
+        req.validatedBody.datetime,
+        req.validatedBody.lat,
+        req.validatedBody.lng,
+        req.validatedBody.notes,
+        req.validatedBody.id
       ]
     );
 
@@ -76,7 +76,7 @@ router.put(
       };
     }
 
-    res.status(200).json(serializeBird(birds[0]));
+    res.status(200).json((sightings[0]));
   })
 );
 
