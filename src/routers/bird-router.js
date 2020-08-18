@@ -3,18 +3,12 @@ import validateSchema from "../validate-schema.js";
 import db from "../db.js";
 import wrapAsync from "../wrap-async.js";
 import { birdPostSchema, birdPutSchema } from "../schema/bird-schema.js";
-import { sightingsPostSchema, sightingsPutSchema } from "../schema/sightings-schema.js";
+import {
+  sightingsPostSchema,
+  sightingsPutSchema,
+} from "../schema/sightings-schema.js";
 
 const router = express.Router();
-
-/*
-function serializeBird(bird) {
-  return {
-    ...bird,
-    date: bird.date.toISOString().slice(0,10) //I'm guessing this will have to be changed
-  }
-}
-*/
 
 router.get("/api/sightings", async (req, res) => {
   const { rows: sightings } = await db.query(
@@ -41,11 +35,11 @@ router.post(
         req.validatedBody.datetime,
         req.validatedBody.lat,
         req.validatedBody.lng,
-        req.validatedBody.notes
+        req.validatedBody.notes,
       ]
     );
 
-    res.status(201).json((sightings[0]));
+    res.status(201).json(sightings[0]);
   })
 );
 
@@ -87,18 +81,18 @@ router.put(
 );
 
 router.delete(
-  "/api/birds/:id",
+  "/api/sightings/:sighting_id",
   wrapAsync(async (req, res) => {
     const { rowCount: deleted } = await db.query(
-      `DELETE FROM birds 
+      `DELETE FROM sightings 
     WHERE id = ($1)`,
-      [Number(req.params.id)]
+      [Number(req.params.sighting_id)]
     );
 
     if (deleted === 0) {
       throw {
         status: 404,
-        messages: ["There is no bird with this ID"],
+        messages: ["There is no sighting with this ID"],
       };
     }
 
