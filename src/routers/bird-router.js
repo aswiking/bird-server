@@ -2,7 +2,6 @@ import express from "express";
 import validateSchema from "../validate-schema.js";
 import db from "../db.js";
 import wrapAsync from "../wrap-async.js";
-import { birdPostSchema, birdPutSchema } from "../schema/bird-schema.js";
 import {
   sightingsPostSchema,
   sightingsPutSchema,
@@ -65,7 +64,7 @@ router.put(
         req.validatedBody.lat,
         req.validatedBody.lng,
         req.validatedBody.notes,
-        req.validatedBody.id
+        req.validatedBody.id,
       ]
     );
 
@@ -76,7 +75,7 @@ router.put(
       };
     }
 
-    res.status(200).json((sightings[0]));
+    res.status(200).json(sightings[0]);
   })
 );
 
