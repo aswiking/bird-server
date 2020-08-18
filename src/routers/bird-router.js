@@ -3,6 +3,7 @@ import validateSchema from "../validate-schema.js";
 import db from "../db.js";
 import wrapAsync from "../wrap-async.js";
 import { birdPostSchema, birdPutSchema } from "../schema/bird-schema.js";
+import { sightingsPostSchema, sightingsPutSchema } from "../schema/sightings-schema.js";
 
 const router = express.Router();
 
@@ -23,27 +24,28 @@ router.get("/api/sightings", async (req, res) => {
 });
 
 router.post(
-  "/api/birds",
-  validateSchema(birdPostSchema),
+  "/api/sightings",
+  validateSchema(sightingsPostSchema),
   wrapAsync(async (req, res) => {
-    const { rows: birds } = await db.query(
-      `INSERT INTO birds (
-      name, scientific, location, date, image
+    const { rows: sightings } = await db.query(
+      `INSERT INTO sightings (
+        bird_id, user_id, datetime, lat, lng, notes
     ) VALUES (
-      $1, $2, $3, $4, $5
+      $1, $2, $3, $4, $5, $6
     ) RETURNING
-      id, name, scientific, location, date, image
+      bird_id, user_id, datetime, lat, lng, notes
     `,
       [
-        req.validatedBody.name,
-        req.validatedBody.scientific,
-        req.validatedBody.location,
-        req.validatedBody.date,
-        req.validatedBody.image,
+        req.validatedBody.bird_id,
+        req.validatedBody.user_id,
+        req.validatedBody.datetime,
+        req.validatedBody.lat,
+        req.validatedBody.lng,
+        req.validatedBody.notes
       ]
     );
 
-    res.status(201).json(serializeBird(birds[0]));
+    res.status(201).json((sightings[0]));
   })
 );
 
