@@ -1,8 +1,14 @@
 export default function wrapAsync(fn) {
-  function inner(...args) {
-    const returnValue = fn(...args);
+  async function inner(...args) {
+    let returnValue;
     const next = args[args.length - 1];
-    return Promise.resolve(returnValue).catch(next);
+    try {
+      returnValue = await fn(...args);
+    }
+    catch (e) {
+      return next(e);
+    }
+    return returnValue;
   }
   return inner;
 }
