@@ -1,6 +1,7 @@
 import express from "express";
 import simpleOauth2 from "simple-oauth2";
 import fetch from "node-fetch";
+import admin from "firebase-admin";
 
 import wrapAsync from "../wrap-async.js";
 
@@ -43,26 +44,51 @@ const router = express.Router();
 router.get(
   "/instagram-callback",
   wrapAsync(async (req, res) => {
-   // const body = `client_id="1440877326102459"&client_secret="599c26ffa600287d78052c4bd9528b51"&code=${req.query.code}$grant_type="authorization_code"&redirect_uri="https://localhost:8080/instagram-callback"`;
-
-    // {
-    //   client_id: "1440877326102459",
-    //   client_secret: "599c26ffa600287d78052c4bd9528b51",
-    //   code: req.query.code,
-    //   grant_type: "authorization_code",
-    //   redirect_uri: "https://localhost:8080/instagram-callback",
-    // }
-
-  const response = await fetch("https://api.instagram.com/oauth/access_token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `client_id=1440877326102459&client_secret=599c26ffa600287d78052c4bd9528b51&code=${req.query.code}$grant_type=authorization_code&redirect_uri=https://localhost:8080/instagram-callback`,
-    });
+    const response = await fetch(
+      "https://api.instagram.com/oauth/access_token",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `client_id=1440877326102459&client_secret=599c26ffa600287d78052c4bd9528b51&code=${req.query.code}&grant_type=authorization_code&redirect_uri=https://localhost:8080/instagram-callback`,
+      }
+    );
     const result = await response.json();
-    console.log(result)
-  }
-  )
-  
+    console.log(result);
+    const accessToken = result.access_token;
+    const instagramUserID = String(result.user_id);
+    // const profilePic = result.profile_picture;
+    // const userName = result.full_name;
+    // console.log(profilePic, userName)
+
+    // Create a Firebase custom auth token.
+    //const firebaseToken = createFirebaseToken(instagramUserID);
+
+    const customToken = await admin.auth().createCustomToken(instagramUserID);
+
+    res.send(signInFirebaseTemplate(customToken));
+  })
+);
+
+router.post("/api/login/instagram", 
+
+  wrapAsync(async (req, res) => {
+    const code = req.body.code;
+    const response = await fetch(
+      "https://api.instagram.com/oauth/access_token",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `client_id=1440877326102459&client_secret=599c26ffa600287d78052c4bd9528b51&code=${code}&grant_type=authorization_code&redirect_uri=https://localhost:8080/instagram-callback`,
+      }
+    );
+    const result = await response.json();
+    console.log(result);
+    const accessToken = result.access_token;
+    const instagramUserID = String(result.user_id);
+    const customToken = await admin.auth().createCustomToken(instagramUserID);
+
+    res.status(201).json({firebaseToken: customToken, instagramToken: accessToken});
+  })
 );
 
 //   const results = await oauth2.getToken({
