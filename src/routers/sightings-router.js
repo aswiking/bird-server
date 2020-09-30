@@ -6,6 +6,8 @@ import {
   sightingsPostSchema,
   sightingsPutSchema,
 } from "../schema/sightings-schema.js";
+import pg from "pg";
+import format from "pg-format";
 
 const router = express.Router();
 
@@ -29,7 +31,7 @@ router.post(
     ) VALUES (
       $1, $2, $3, $4, $5, $6
     ) RETURNING
-      bird_id, user_id, datetime, lat, lng, notes
+      bird_id, user_id, datetime, lat, lng, notes, id
     `,
       [
         req.validatedBody.bird_id,
@@ -42,6 +44,46 @@ router.post(
     );
 
     res.status(201).json(sightings[0]);
+
+    const sightingID = sightings[0].id;
+
+    if (req.validatedBody.imageIDs.length !== 0) {
+      const images = req.validatedBody.imageIDs.map((image) => {
+        [sightingID, req.validatedBody.imageIDs];
+      });
+
+      const query1 = format(`INSERT INTO photos (sighting_id, instagram_media_id
+      ) VALUES %L RETURNING sighting_id, instagram_media_id`);
+
+      async function run() {
+        let client;
+        try {
+          client = new pg.Client({
+            connectionString: 'postgresql://localhost/node_example'
+          });
+          await client.connect();
+          let {rows} = await client.query(query1);
+          console.log(rows);
+        } catch (e) {
+          console.error(e);
+        } finally {
+          client.end();
+        }
+      }
+      
+      run();
+
+      // req.validatedBody.imageIDs.map((image) => {
+      //   const { rows: images } = await db.query(
+      //     `INSERT INTO photos (
+      //       sighting_id, instagram_media_id
+      //     ) VALUES (
+      //       $1, $2
+      //     ) RETURNING id, sighting_id, instagram_media_id
+      //     `, [sightingID, req.validatedBody.imageIDs]
+      //   )
+      // })
+    }
   })
 );
 
