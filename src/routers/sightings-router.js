@@ -15,7 +15,12 @@ router.get(
   "/api/sightings",
   wrapAsync(async (req, res) => {
     const { rows: sightings } = await db.query(
-      "SELECT sightings.id, sightings.bird_id, birds.common, birds.scientific, sightings.user_id, sightings.datetime, sightings.lat, sightings.lng, sightings.notes FROM sightings JOIN birds ON (sightings.bird_id = birds.id) ORDER BY sightings.datetime DESC LIMIT 5"
+      `SELECT sightings.id, sightings.bird_id, birds.common, birds.scientific, sightings.user_id, sightings.datetime, sightings.lat, sightings.lng, photos.id as photo_id, photos.instagram_media_id, sightings.notes 
+      FROM sightings 
+      JOIN birds ON (sightings.bird_id = birds.id) 
+      LEFT JOIN photos ON (photos.sighting_id = sightings.id)
+      ORDER BY sightings.datetime DESC 
+      LIMIT 5`
     );
     res.status(200).json(sightings);
   })
@@ -43,46 +48,29 @@ router.post(
       ]
     );
 
-    res.status(201).json(sightings[0]);
+    
 
     const sightingID = sightings[0].id;
 
-    if (req.validatedBody.imageIDs.length !== 0) {
-      const images = req.validatedBody.imageIDs.map((image) => {
-        [sightingID, req.validatedBody.imageIDs];
+    if (req.validatedBody.images.length !== 0) {
+      const images = req.validatedBody.images.map((image) => {
+        return [sightingID, image.imageID, image.permalink];
       });
+      console.log(images);
 
-      const query1 = format(`INSERT INTO photos (sighting_id, instagram_media_id
-      ) VALUES %L RETURNING sighting_id, instagram_media_id`);
+      const query1 = format(`INSERT INTO photos (sighting_id, instagram_media_id, permalink
+      ) VALUES %L RETURNING sighting_id, instagram_media_id, permalink`, images);
 
-      async function run() {
-        let client;
-        try {
-          client = new pg.Client({
-            connectionString: 'postgresql://localhost/node_example'
-          });
-          await client.connect();
-          let {rows} = await client.query(query1);
-          console.log(rows);
-        } catch (e) {
-          console.error(e);
-        } finally {
-          client.end();
-        }
+      console.log(query1);
+
+      let {rows: photos} = await db.query(query1);
+
+      const sightingsObject = {
+        ...sightings[0], ...photos[0]
       }
-      
-      run();
 
-      // req.validatedBody.imageIDs.map((image) => {
-      //   const { rows: images } = await db.query(
-      //     `INSERT INTO photos (
-      //       sighting_id, instagram_media_id
-      //     ) VALUES (
-      //       $1, $2
-      //     ) RETURNING id, sighting_id, instagram_media_id
-      //     `, [sightingID, req.validatedBody.imageIDs]
-      //   )
-      // })
+      res.status(201).json(sightingsObject);
+
     }
   })
 );

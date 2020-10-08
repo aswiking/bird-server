@@ -9,7 +9,7 @@ const sightingsPostSchema = Joi.object({
     datetime: Joi.date().format("YYYY-MM-DD").utc().required(),
     lat: Joi.number().allow("").optional(),
     lng: Joi.number().allow("").optional(),
-    imageIDs: Joi.array().allow(""),
+    images: Joi.array().allow(""),
     notes: Joi.string().allow("")
 
 });
