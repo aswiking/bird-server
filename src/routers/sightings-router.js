@@ -31,12 +31,15 @@ router.post(
   validateSchema(sightingsPostSchema),
   wrapAsync(async (req, res) => {
     const { rows: sightings } = await db.query(
-      `INSERT INTO sightings (
+      `WITH sighting as (INSERT INTO sightings (
         bird_id, user_id, datetime, lat, lng, notes
     ) VALUES (
       $1, $2, $3, $4, $5, $6
     ) RETURNING
-      bird_id, user_id, datetime, lat, lng, notes, id
+      bird_id, user_id, datetime, lat, lng, notes, id)
+    SELECT sighting.id, sighting.bird_id, birds.common, birds.scientific, sighting.user_id, sighting.datetime, sighting.lat, sighting.lng, sighting.notes
+      FROM sighting
+      JOIN birds ON (sighting.bird_id = birds.id)
     `,
       [
         req.validatedBody.bird_id,
@@ -56,12 +59,10 @@ router.post(
       const images = req.validatedBody.images.map((image) => {
         return [sightingID, image.imageID, image.permalink];
       });
-      console.log(images);
 
       const query1 = format(`INSERT INTO photos (sighting_id, instagram_media_id, permalink
       ) VALUES %L RETURNING sighting_id, instagram_media_id, permalink`, images);
 
-      console.log(query1);
 
       let {rows: photos} = await db.query(query1);
 
