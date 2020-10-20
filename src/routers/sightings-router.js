@@ -26,6 +26,21 @@ router.get(
   })
 );
 
+router.get(
+  "/api/sightings/:sightingID",
+  wrapAsync(async (req, res) => {
+    const { rows: sightingDetails } = await db.query(
+      `SELECT sightings.bird_id, birds.common, birds.scientific, birds.uk_status, groups.name, groups.scientific, sightings.datetime, sightings.lat, sightings.lng, photos.id as photo_id, photos.instagram_media_id, sightings.notes 
+      FROM sightings
+      JOIN birds ON (sightings.bird_id = birds.id) 
+      JOIN groups ON (birds.group_id = groups.id)
+      LEFT JOIN photos ON (photos.sighting_id = sightings.id)
+      WHERE sightings.id = $1`, [req.params.sightingID]
+    );
+    res.status(200).json(sightingDetails);
+  })
+);
+
 router.post(
   "/api/sightings",
   validateSchema(sightingsPostSchema),
@@ -51,8 +66,6 @@ router.post(
       ]
     );
 
-    
-
     const sightingID = sightings[0].id;
 
     if (req.validatedBody.images.length !== 0) {
@@ -60,18 +73,20 @@ router.post(
         return [sightingID, image.imageID, image.permalink];
       });
 
-      const query1 = format(`INSERT INTO photos (sighting_id, instagram_media_id, permalink
-      ) VALUES %L RETURNING sighting_id, instagram_media_id, permalink`, images);
+      const query1 = format(
+        `INSERT INTO photos (sighting_id, instagram_media_id, permalink
+      ) VALUES %L RETURNING sighting_id, instagram_media_id, permalink`,
+        images
+      );
 
-
-      let {rows: photos} = await db.query(query1);
+      let { rows: photos } = await db.query(query1);
 
       const sightingsObject = {
-        ...sightings[0], ...photos[0]
-      }
+        ...sightings[0],
+        ...photos[0],
+      };
 
       res.status(201).json(sightingsObject);
-
     }
   })
 );
