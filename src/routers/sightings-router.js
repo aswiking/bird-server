@@ -24,7 +24,9 @@ router.get(
     );
     const sightingsWithPhotos = [];
     sightings.forEach((sighting) => {
-      const duplicate = sightingsWithPhotos.find(({id})=> id === sighting.id);
+      const duplicate = sightingsWithPhotos.find(
+        ({ id }) => id === sighting.id
+      );
       if (!duplicate) {
         sightingsWithPhotos.push({
           id: sighting.id,
@@ -37,19 +39,20 @@ router.get(
           lng: sighting.lng,
           notes: sighting.notes,
           photos: [
-            {photo_id: sighting.photo_id,
-              instagram_media_id: sighting.instagram_media_id}
-          ]
-        })
-      }
-      else {
+            {
+              photo_id: sighting.photo_id,
+              instagram_media_id: sighting.instagram_media_id,
+            },
+          ],
+        });
+      } else {
         duplicate.photos.push({
           photo_id: sighting.photo_id,
-          instagram_media_id: sighting.instagram_media_id
-        })
+          instagram_media_id: sighting.instagram_media_id,
+        });
       }
     });
-    
+
     res.status(200).json(sightingsWithPhotos);
   })
 );
@@ -58,7 +61,7 @@ router.get(
   "/api/sightings/:sightingID",
   wrapAsync(async (req, res) => {
     const { rows: sightingDetails } = await db.query(
-      `SELECT sightings.bird_id, birds.common, birds.scientific, birds.uk_status, groups.name, groups.scientific, sightings.datetime, sightings.lat, sightings.lng, photos.id as photo_id, photos.instagram_media_id, sightings.notes 
+      `SELECT sightings.bird_id, birds.common, birds.scientific, birds.uk_status, groups.name as group_common, groups.scientific as group_scientific, sightings.datetime, sightings.lat, sightings.lng, photos.id as photo_id, photos.instagram_media_id, sightings.notes 
       FROM sightings
       JOIN birds ON (sightings.bird_id = birds.id) 
       JOIN groups ON (birds.group_id = groups.id)
@@ -67,9 +70,40 @@ router.get(
       [req.params.sightingID]
     );
 
-    res.status(200).json(sightingDetails[0]);
 
-    console.log(sightingDetails);
+
+    const sightingsWithPhotos = [];//doesn't need to be array
+    sightingDetails.forEach((sightingRow, index) => {
+      
+      if (index === 0) {
+        sightingsWithPhotos.push({
+          bird_id: sightingRow.bird_id,
+          common: sightingRow.common,
+          datetime: sightingRow.datetime,
+          group_common: sightingRow.group_common,
+          group_scientific: sightingRow.group_scientific,
+          photos: [
+            {
+              photo_id: sightingRow.photo_id,
+              instagram_media_id: sightingRow.instagram_media_id,
+            },
+          ],
+          lat: sightingRow.lat,
+          lng: sightingRow.lng,
+          notes: sightingRow.notes,
+          scientific: sightingRow.scientific,
+          uk_status: sightingRow.uk_status,
+        });
+      } else {
+        sightingsWithPhotos[0].photos.push({
+          photo_id: sightingRow.photo_id,
+          instagram_media_id: sightingRow.instagram_media_id,
+        });
+      }
+    });
+
+    res.status(200).json(sightingsWithPhotos[0]);
+
   })
 );
 
