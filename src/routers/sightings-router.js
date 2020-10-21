@@ -22,7 +22,35 @@ router.get(
       ORDER BY sightings.datetime DESC 
       LIMIT 5`
     );
-    res.status(200).json(sightings);
+    const sightingsWithPhotos = [];
+    sightings.forEach((sighting) => {
+      const duplicate = sightingsWithPhotos.find(({id})=> id === sighting.id);
+      if (!duplicate) {
+        sightingsWithPhotos.push({
+          id: sighting.id,
+          bird_id: sighting.bird_id,
+          common: sighting.common,
+          scientific: sighting.scientific,
+          user_id: sighting.user_id,
+          datetime: sighting.datetime,
+          lat: sighting.lat,
+          lng: sighting.lng,
+          notes: sighting.notes,
+          photos: [
+            {photo_id: sighting.photo_id,
+              instagram_media_id: sighting.instagram_media_id}
+          ]
+        })
+      }
+      else {
+        duplicate.photos.push({
+          photo_id: sighting.photo_id,
+          instagram_media_id: sighting.instagram_media_id
+        })
+      }
+    });
+    
+    res.status(200).json(sightingsWithPhotos);
   })
 );
 
@@ -35,9 +63,13 @@ router.get(
       JOIN birds ON (sightings.bird_id = birds.id) 
       JOIN groups ON (birds.group_id = groups.id)
       LEFT JOIN photos ON (photos.sighting_id = sightings.id)
-      WHERE sightings.id = $1`, [req.params.sightingID]
+      WHERE sightings.id = $1`,
+      [req.params.sightingID]
     );
-    res.status(200).json(sightingDetails);
+
+    res.status(200).json(sightingDetails[0]);
+
+    console.log(sightingDetails);
   })
 );
 
@@ -46,16 +78,13 @@ router.post(
   validateSchema(sightingsPostSchema),
   wrapAsync(async (req, res) => {
     const { rows: sightings } = await db.query(
-      `WITH sighting as (INSERT INTO sightings (
-        bird_id, user_id, datetime, lat, lng, notes
-    ) VALUES (
-      $1, $2, $3, $4, $5, $6
-    ) RETURNING
-      bird_id, user_id, datetime, lat, lng, notes, id)
-    SELECT sighting.id, sighting.bird_id, birds.common, birds.scientific, sighting.user_id, sighting.datetime, sighting.lat, sighting.lng, sighting.notes
+      `WITH sighting as 
+        (INSERT INTO sightings (bird_id, user_id, datetime, lat, lng, notes) 
+          VALUES ( $1, $2, $3, $4, $5, $6) 
+          RETURNING bird_id, user_id, datetime, lat, lng, notes, id)
+      SELECT sighting.id, sighting.bird_id, birds.common, birds.scientific, sighting.user_id, sighting.datetime, sighting.lat, sighting.lng, sighting.notes
       FROM sighting
-      JOIN birds ON (sighting.bird_id = birds.id)
-    `,
+      JOIN birds ON (sighting.bird_id = birds.id)`,
       [
         req.validatedBody.bird_id,
         req.validatedBody.user_id,
@@ -81,12 +110,11 @@ router.post(
 
       let { rows: photos } = await db.query(query1);
 
-      const sightingsObject = {
-        ...sightings[0],
-        ...photos[0],
-      };
+      let sightingsObject = sightings[0];
 
-      res.status(201).json(sightingsObject);
+      sightingsObject.photos = photos;
+
+      res.status(201).json(sightings[0]);
     }
   })
 );
