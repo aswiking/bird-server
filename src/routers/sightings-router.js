@@ -134,7 +134,7 @@ router.post(
 
     if (req.validatedBody.images.length !== 0) {
       const images = req.validatedBody.images.map((image) => {
-        return [sightingID, image.imageID];
+        return [sightingID, image.instagram_media_id];
       });
 
       const query1 = format(
@@ -194,11 +194,11 @@ router.put(
     )
 
     let sightingsObject = sightings[0];
-    let photos;
+    let photoDetails;
 
-    if (req.validatedBody.images.length !== 0) {
-      const images = req.validatedBody.images.map((image) => {
-        return [req.validatedBody.id, image.imageID]
+    if (req.validatedBody.photos.length !== 0) {
+      const images = req.validatedBody.photos.map((image) => {
+        return [req.validatedBody.id, image.instagram_media_id]
       })
 
       const query = format (
@@ -208,11 +208,11 @@ router.put(
       )
       let { rows: photoRows } = await db.query(query);
       
-      photos = photoRows;
+      photoDetails = photoRows;
 
     }
 
-    sightingsObject.photos = photos;
+    sightingsObject.photos = photoDetails;
 
     console.log("Sightings object", sightingsObject)
 
