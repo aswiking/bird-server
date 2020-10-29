@@ -134,12 +134,12 @@ router.post(
 
     if (req.validatedBody.images.length !== 0) {
       const images = req.validatedBody.images.map((image) => {
-        return [sightingID, image.imageID, image.permalink];
+        return [sightingID, image.imageID];
       });
 
       const query1 = format(
-        `INSERT INTO photos (sighting_id, instagram_media_id, permalink
-      ) VALUES %L RETURNING sighting_id, instagram_media_id, permalink`,
+        `INSERT INTO photos (sighting_id, instagram_media_id 
+      ) VALUES %L RETURNING sighting_id, instagram_media_id`,
         images
       );
 
@@ -187,7 +187,36 @@ router.put(
       };
     }
 
-    res.status(200).json(sightings[0]);
+    await db.query(
+      `DELETE FROM photos
+      WHERE sighting_id = ($1)`,
+      [Number(req.validatedBody.id)]
+    )
+
+    let sightingsObject = sightings[0];
+    let photos;
+
+    if (req.validatedBody.images.length !== 0) {
+      const images = req.validatedBody.images.map((image) => {
+        return [req.validatedBody.id, image.imageID]
+      })
+
+      const query = format (
+        `INSERT INTO photos (sighting_id, instagram_media_id 
+          ) VALUES %L RETURNING sighting_id, instagram_media_id`,
+          images
+      )
+      let { rows: photoRows } = await db.query(query);
+      
+      photos = photoRows;
+
+    }
+
+    sightingsObject.photos = photos;
+
+    console.log("Sightings object", sightingsObject)
+
+    res.status(200).json(sightingsObject);
   })
 );
 
