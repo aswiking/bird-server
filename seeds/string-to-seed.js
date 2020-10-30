@@ -1,42 +1,36 @@
 function stringToSeed(tableData) {
-
   function splitAtLineBreak() {
-  const dataRows = tableData.split("\n");
-  return dataRows;
+    const dataRows = tableData.split("\n");
+    return dataRows;
   }
   const dataRows = splitAtLineBreak();
 
-  function addBrackets() {
+  function addBrackets() {}
 
-  }
-  
   const formattedData = dataRows.map((row) => {
-  return row.split("	")
-  })
-  
+    return row.split("	");
+  });
 
   const categoryNumber = formattedData.map((row) => {
-
     return row.map((column, index) => {
-
       if (index === 0 || index === 4) {
-        return Number(column)
-      } else { 
-        return `"${column}"`
+        return Number(column);
+      } else {
+        return `"${column}"`;
       }
-      
-    })
-  })
+    });
+  });
 
-  console.log(categoryNumber)
-  
   const dataString = categoryNumber.join("),\n(");
 
-  console.log(dataString)
-  
-  }
+  const doubleSingleQuotes = dataString.replace(/’/g, "''");
 
-  const speciesData = `1	Capercaillie	Tetrao urogallus	Re-introduced Breeder	1
+  const dataStringSingleQuotes = doubleSingleQuotes.replace(/"/g, "'");
+
+  console.log(dataStringSingleQuotes);
+}
+
+const speciesData = `1	Capercaillie	Tetrao urogallus	Re-introduced Breeder	1
   2	Black Grouse	Lyrurus tetrix	Resident Breeder	1
   3	Ptarmigan	Lagopus muta	Resident Breeder	1
   4	Red Grouse	Lagopus lagopus	Resident Breeder	1
@@ -656,7 +650,6 @@ function stringToSeed(tableData) {
   618	Scarlet Tanager	Piranga olivacea	Accidental	82
   619	Rose-breasted Grosbeak	Pheucticus ludovicianus	Accidental	82
   620	Indigo Bunting	Passerina cyanea	Accidental	82`;
-  
 
 const groupData = `1	grouse	Tetraonidae
 2	Pheasants, partridges and quail	Phasianidae
@@ -740,6 +733,5 @@ const groupData = `1	grouse	Tetraonidae
 80	Icterids	Icteridae
 81	New World warblers	Parulidae
 82	Cardinals and allies	Cardinalidae`;
-
 
 stringToSeed(speciesData);
