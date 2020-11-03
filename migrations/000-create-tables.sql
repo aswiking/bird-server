@@ -1,7 +1,8 @@
 CREATE TABLE groups
 (
     id SERIAL PRIMARY KEY,
-    name TEXT UNIQUE NOT NULL 
+    name TEXT UNIQUE NOT NULL, 
+    scientific TEXT UNIQUE NOT NULL, 
 );
 
 CREATE TABLE birds
@@ -27,5 +28,6 @@ CREATE TABLE photos
 (
     id SERIAL PRIMARY KEY,
     sighting_id INTEGER REFERENCES sightings(id),
-    instagram_media_id TEXT NOT NULL
+    instagram_media_id TEXT NOT NULL,
+    permalink TEXT NOT NULL
 );
