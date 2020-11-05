@@ -73,7 +73,6 @@ router.get(
     let sightingsWithPhotos;
 
     sightingDetails.forEach((sightingRow, index) => {
-      
       if (index === 0) {
         sightingsWithPhotos = {
           id: sightingRow.id,
@@ -104,7 +103,6 @@ router.get(
     });
 
     res.status(200).json(sightingsWithPhotos);
-
   })
 );
 
@@ -132,15 +130,15 @@ router.post(
 
     const sightingID = sightings[0].id;
 
-    if (req.validatedBody.images.length !== 0) {
-      const images = req.validatedBody.images.map((image) => {
-        return [sightingID, image.instagram_media_id];
+    if (req.validatedBody.photos.length !== 0) {
+      const formattedPhotos = req.validatedBody.photos.map((photo) => {
+        return [sightingID, photo.instagram_media_id];
       });
 
       const query1 = format(
         `INSERT INTO photos (sighting_id, instagram_media_id 
       ) VALUES %L RETURNING sighting_id, instagram_media_id`,
-        images
+      formattedPhotos
       );
 
       let { rows: photos } = await db.query(query1);
@@ -191,30 +189,29 @@ router.put(
       `DELETE FROM photos
       WHERE sighting_id = ($1)`,
       [Number(req.validatedBody.id)]
-    )
+    );
 
     let sightingsObject = sightings[0];
     let photoDetails;
 
     if (req.validatedBody.photos.length !== 0) {
       const images = req.validatedBody.photos.map((image) => {
-        return [req.validatedBody.id, image.instagram_media_id]
-      })
+        return [req.validatedBody.id, image.instagram_media_id];
+      });
 
-      const query = format (
+      const query = format(
         `INSERT INTO photos (sighting_id, instagram_media_id 
           ) VALUES %L RETURNING sighting_id, instagram_media_id`,
-          images
-      )
+        images
+      );
       let { rows: photoRows } = await db.query(query);
-      
-      photoDetails = photoRows;
 
+      photoDetails = photoRows;
     }
 
     sightingsObject.photos = photoDetails;
 
-    console.log("Sightings object", sightingsObject)
+    console.log("Sightings object", sightingsObject);
 
     res.status(200).json(sightingsObject);
   })
@@ -224,8 +221,7 @@ router.delete(
   "/api/sightings/:sighting_id",
   wrapAsync(async (req, res) => {
     const { rowCount: deleted } = await db.query(
-      `DELETE FROM sightings 
-    WHERE id = ($1)`,
+      `DELETE FROM sightings WHERE id = ($1)`,
       [Number(req.params.sighting_id)]
     );
 
