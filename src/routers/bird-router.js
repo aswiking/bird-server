@@ -74,23 +74,15 @@ router.get(
      )
 
 
-     const birdObject = {
-       id: birdDetails[0].id,
-       common: birdDetails[0].common,
-       scientific: birdDetails[0].scientific,
-       uk_status: birdDetails[0].uk_status,
-       group_name: birdDetails[0].group_name,
-       group_scientific: birdDetails[0].group_scientific
-     }
-
-
-     let sightingsObject = {};
+     let sightingsArray = [];
 
      birdDetails.forEach((sightingRow) => {
 
-      if (!(sightingRow.sighting_id in sightingsObject)) {
+      if (
+        !(sightingsArray.find((sighting) => (sighting.id === sightingRow.sighting_id)))
+        ) {
 
-        sightingsObject[sightingRow.sighting_id] = {
+        sightingsArray.push({
           id: sightingRow.sighting_id,
           user_id: sightingRow.user_id,
           datetime: sightingRow.datetime,
@@ -103,9 +95,17 @@ router.get(
               instagram_media_id: sightingRow.instagram_media_id,
             },
           ],
-        }
+        })
       } else {
-        sightingsObject[sightingRow.sighting_id].photos.push({
+
+        const sightingIndex = sightingsArray.findIndex((sighting) => {
+          console.log(sighting.id, sightingRow.sighting_id );
+          return sighting.id === sightingRow.sighting_id;
+        })
+
+        console.log(sightingIndex)
+
+        sightingsArray[sightingIndex].photos.push({
           photo_id: sightingRow.photo_id,
           instagram_media_id: sightingRow.instagram_media_id,
         })
@@ -113,14 +113,19 @@ router.get(
 
      });
 
-     const response = {
-       bird: birdObject,
-       sightings: sightingsObject
-     }
+     const birdObject = {
+      id: birdDetails[0].id,
+      common: birdDetails[0].common,
+      scientific: birdDetails[0].scientific,
+      uk_status: birdDetails[0].uk_status,
+      group_name: birdDetails[0].group_name,
+      group_scientific: birdDetails[0].group_scientific,
+      sightings: sightingsArray
+    }
 
 
 
-res.status(200).json(response)
+res.status(200).json(birdObject)
   })
 )
 
