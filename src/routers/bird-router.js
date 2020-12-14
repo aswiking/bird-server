@@ -86,7 +86,7 @@ router.get(
 
      let sightingsObject = {};
 
-     birdDetails.forEach((sightingRow, index) => {
+     birdDetails.forEach((sightingRow) => {
 
       if (!(sightingRow.sighting_id in sightingsObject)) {
 
@@ -111,11 +111,16 @@ router.get(
         })
       }
 
-     })
+     });
+
+     const response = {
+       bird: birdObject,
+       sightings: sightingsObject
+     }
 
 
 
-res.status(200).json(sightingsObject)
+res.status(200).json(response)
   })
 )
 
