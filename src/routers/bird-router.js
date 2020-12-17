@@ -31,9 +31,25 @@ router.get(
       const hydratedBirds = new Treeize();
 
       hydratedBirds.grow(birds);
-      console.log(hydratedBirds.getData());
+      
+      const fullBirds = hydratedBirds.getData().map((bird) => {
+        if (!('sightings' in bird)) {
+          bird.sightings = [];
+          return bird;
+        } else  {
+          bird.sightings.forEach((sighting) => {
+            if (!('photos' in sighting)) {
+              sighting.photos = [];
+              return sighting;
+            } else {
+              return sighting;
+            }
+          })
+          return bird;
+        } 
+      })
 
-      res.status(200).json(hydratedBirds.getData());
+      res.status(200).json(fullBirds);
 
     } else {
       const { rows: birds } = await db.query(
@@ -50,10 +66,25 @@ router.get(
       const hydratedBirds = new Treeize();
 
       hydratedBirds.grow(birds);
+      
+      const fullBirds = hydratedBirds.getData().map((bird) => {
+        if (!('sightings' in bird)) {
+          bird.sightings = [];
+          return bird;
+        } else  {
+          bird.sightings.forEach((sighting) => {
+            if (!('photos' in sighting)) {
+              sighting.photos = [];
+              return sighting;
+            } else {
+              return sighting;
+            }
+          })
+          return bird;
+        } 
+      })
 
-      console.log(hydratedBirds.getData());
-
-      res.status(200).json((hydratedBirds.getData()));
+      res.status(200).json(fullBirds);
     }
   })
 );
@@ -77,10 +108,26 @@ router.get(
 
      const hydratedBirds = new Treeize();
 
-     hydratedBirds.grow(birdDetails);
-     console.log(hydratedBirds.getData());
+     hydratedBirds.grow(birds);
+     
+     const fullBirds = hydratedBirds.getData().map((bird) => {
+       if (!('sightings' in bird)) {
+         bird.sightings = [];
+         return bird;
+       } else  {
+         bird.sightings.forEach((sighting) => {
+           if (!('photos' in sighting)) {
+             sighting.photos = [];
+             return sighting;
+           } else {
+             return sighting;
+           }
+         })
+         return bird;
+       } 
+     })
 
-res.status(200).json(hydratedBirds.getData())
+res.status(200).json(fullBirds)
   })
 )
 
