@@ -2,7 +2,7 @@ import express from "express";
 import requireLogin from '../require-login.js'; 
 import db from "../db.js";
 import wrapAsync from "../wrap-async.js";
-import hydrateBird from "../hydrate-bird.js";
+import Treeize from "treeize";
 
 const router = express.Router();
 
@@ -15,8 +15,8 @@ router.get(
       const { rows: birds } = await db.query(
         `SELECT birds.id, birds.common, birds.scientific, birds.uk_status, 
         groups.id AS group_id, groups.name AS group_name, groups.scientific AS group_scientific, 
-        sightings.id AS sighting_id,sightings.datetime, sightings.lat, sightings.lng, sightings.notes,
-        photos.id as photo_id, photos.instagram_media_id
+        sightings.id AS "sightings:id", sightings.datetime AS "sightings:datetime", sightings.lat AS "sightings:lat", sightings.lng AS "sightings:lng", sightings.notes AS "sightings:notes",
+        photos.id AS "sightings:photos:id", photos.instagram_media_id AS "sightings:photos:instagram_media_id" 
         FROM birds 
         JOIN groups ON (birds.group_id = groups.id) 
         LEFT JOIN sightings ON (birds.id = sightings.bird_id) 
@@ -27,68 +27,33 @@ router.get(
         ORDER BY groups.id ASC`,
         [`%${req.query.query}%`]
       );
-      res.status(200).json(birds.map(hydrateBird));
+
+      const hydratedBirds = new Treeize();
+
+      hydratedBirds.grow(birds);
+      console.log(hydratedBirds.getData());
+
+      res.status(200).json(hydratedBirds.getData());
+
     } else {
       const { rows: birds } = await db.query(
         `SELECT birds.id, birds.common, birds.scientific, birds.uk_status, 
         groups.id AS group_id, groups.name AS group_name, groups.scientific AS group_scientific, 
-        sightings.id AS sighting_id,sightings.datetime, sightings.lat, sightings.lng, sightings.notes,
-        photos.id as photo_id, photos.instagram_media_id
+        sightings.id AS "sightings:id", sightings.datetime AS "sightings:datetime", sightings.lat AS "sightings:lat", sightings.lng AS "sightings:lng", sightings.notes AS "sightings:notes",
+        photos.id AS "sightings:photos:id", photos.instagram_media_id AS "sightings:photos:instagram_media_id" 
         FROM birds 
         JOIN groups ON (birds.group_id = groups.id) 
         LEFT JOIN sightings ON (birds.id = sightings.bird_id) 
         LEFT JOIN photos ON (photos.sighting_id = sightings.id)
         ORDER BY groups.id ASC`
       );
+      const hydratedBirds = new Treeize();
 
+      hydratedBirds.grow(birds);
 
-      let sightingsArray = [];
+      console.log(hydratedBirds.getData());
 
-      birdDetails.forEach((sightingRow) => {
- 
-       if (
-         !(sightingsArray.find((sighting) => (sighting.id === sightingRow.sighting_id)))
-         ) {
- 
-         sightingsArray.push({
-           id: sightingRow.sighting_id,
-           user_id: sightingRow.user_id,
-           datetime: sightingRow.datetime,
-           lat: sightingRow.lat,
-           lng: sightingRow.lng,
-           notes: sightingRow.notes,
-           photos: [
-             {
-               photo_id: sightingRow.photo_id,
-               instagram_media_id: sightingRow.instagram_media_id,
-             },
-           ],
-         })
-       } else {
- 
-         const sightingIndex = sightingsArray.findIndex((sighting) => {
-           return sighting.id === sightingRow.sighting_id;
-         })
- 
-         sightingsArray[sightingIndex].photos.push({
-           photo_id: sightingRow.photo_id,
-           instagram_media_id: sightingRow.instagram_media_id,
-         })
-       }
- 
-      });
- 
-      const birdObject = {
-       id: birdDetails[0].id,
-       common: birdDetails[0].common,
-       scientific: birdDetails[0].scientific,
-       uk_status: birdDetails[0].uk_status,
-       group_name: birdDetails[0].group_name,
-       group_scientific: birdDetails[0].group_scientific,
-       sightings: sightingsArray
-     }
-     
-      res.status(200).json(birdObject);
+      res.status(200).json((hydratedBirds.getData()));
     }
   })
 );
@@ -99,67 +64,23 @@ router.get(
   wrapAsync(async (req, res) => {
     const { rows: birdDetails } = await db.query(
       `SELECT birds.id, birds.common, birds.scientific, birds.uk_status, 
-        groups.id AS group_id, groups.name AS group_name, groups.scientific AS group_scientific, 
-        sightings.id AS sighting_id,sightings.datetime, sightings.lat, sightings.lng,  sightings.notes,
-        photos.id as photo_id, photos.instagram_media_id
-        FROM birds 
-        JOIN groups ON (birds.group_id = groups.id) 
-        LEFT JOIN sightings ON (birds.id = sightings.bird_id) 
-        LEFT JOIN photos ON (photos.sighting_id = sightings.id)
-        WHERE birds.id = $1`,
+      groups.id AS group_id, groups.name AS group_name, groups.scientific AS group_scientific, 
+      sightings.id AS "sightings:id", sightings.datetime AS "sightings:datetime", sightings.lat AS "sightings:lat", sightings.lng AS "sightings:lng", sightings.notes AS "sightings:notes",
+      photos.id AS "sightings:photos:id", photos.instagram_media_id AS "sightings:photos:instagram_media_id" 
+      FROM birds 
+      JOIN groups ON (birds.group_id = groups.id) 
+      LEFT JOIN sightings ON (birds.id = sightings.bird_id) 
+      LEFT JOIN photos ON (photos.sighting_id = sightings.id)
+      WHERE birds.id = $1`,
         [req.params.birdID]
      )
 
+     const hydratedBirds = new Treeize();
 
-     let sightingsArray = [];
+     hydratedBirds.grow(birdDetails);
+     console.log(hydratedBirds.getData());
 
-     birdDetails.forEach((sightingRow) => {
-
-      if (
-        !(sightingsArray.find((sighting) => (sighting.id === sightingRow.sighting_id)))
-        ) {
-
-        sightingsArray.push({
-          id: sightingRow.sighting_id,
-          user_id: sightingRow.user_id,
-          datetime: sightingRow.datetime,
-          lat: sightingRow.lat,
-          lng: sightingRow.lng,
-          notes: sightingRow.notes,
-          photos: [
-            {
-              photo_id: sightingRow.photo_id,
-              instagram_media_id: sightingRow.instagram_media_id,
-            },
-          ],
-        })
-      } else {
-
-        const sightingIndex = sightingsArray.findIndex((sighting) => {
-          return sighting.id === sightingRow.sighting_id;
-        })
-
-        sightingsArray[sightingIndex].photos.push({
-          photo_id: sightingRow.photo_id,
-          instagram_media_id: sightingRow.instagram_media_id,
-        })
-      }
-
-     });
-
-     const birdObject = {
-      id: birdDetails[0].id,
-      common: birdDetails[0].common,
-      scientific: birdDetails[0].scientific,
-      uk_status: birdDetails[0].uk_status,
-      group_name: birdDetails[0].group_name,
-      group_scientific: birdDetails[0].group_scientific,
-      sightings: sightingsArray
-    }
-
-
-
-res.status(200).json(birdObject)
+res.status(200).json(hydratedBirds.getData())
   })
 )
 
