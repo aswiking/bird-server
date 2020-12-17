@@ -1,5 +1,6 @@
 import express from "express";
 import validateSchema from "../validate-schema.js";
+import requireLogin from '../require-login.js'; 
 import db from "../db.js";
 import wrapAsync from "../wrap-async.js";
 import {
@@ -13,6 +14,7 @@ const router = express.Router();
 
 router.get(
   "/api/sightings",
+  requireLogin, //make so only sightings from this user is shown
   wrapAsync(async (req, res) => {
     const { rows: sightings } = await db.query(
       `SELECT sightings.id, sightings.bird_id, birds.common, birds.scientific, sightings.user_id, sightings.datetime, sightings.lat, sightings.lng, photos.id as photo_id, photos.instagram_media_id, sightings.notes 
