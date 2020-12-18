@@ -4,6 +4,8 @@ import db from "../db.js";
 import wrapAsync from "../wrap-async.js";
 import Treeize from "treeize";
 
+//catch errors for when bird id doesn't exist
+
 const router = express.Router();
 
 router.get(
@@ -93,7 +95,7 @@ router.get(
   "/api/birds/:birdID",
   requireLogin,
   wrapAsync(async (req, res) => {
-    const { rows: birdDetails } = await db.query(
+    const { rows: birdDetails, rowCount: updatedCount } = await db.query(
       `SELECT birds.id, birds.common, birds.scientific, birds.uk_status, 
       groups.id AS "group:id", groups.name AS "group:name", groups.scientific AS "group:scientific", 
       sightings.id AS "sightings:id", sightings.user_id AS "sightings:user_id", sightings.datetime AS "sightings:datetime", sightings.lat AS "sightings:lat", sightings.lng AS "sightings:lng", sightings.notes AS "sightings:notes",
@@ -104,11 +106,18 @@ router.get(
       LEFT JOIN photos ON (photos.sighting_id = sightings.id)
       WHERE (birds.id = $1)`,
         [req.params.birdID, req.user.id]
-     )
+     );
+
+     if (updatedCount === 0) {
+       throw {
+         status: 404,
+         messages: ['There is no bird with this ID']
+       }
+     }
 
      const hydratedBirds = new Treeize();
 
-     hydratedBirds.grow(birds);
+     hydratedBirds.grow(birdDetails);
      
      const fullBirds = hydratedBirds.getData().map((bird) => {
        if (!('sightings' in bird)) {
@@ -127,7 +136,7 @@ router.get(
        } 
      })
 
-res.status(200).json(fullBirds)
+res.status(200).json(fullBirds[0])
   })
 )
 

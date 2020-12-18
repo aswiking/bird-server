@@ -7,39 +7,7 @@ import wrapAsync from "../wrap-async.js";
 
 const router = express.Router();
 
-// // Instagram OAuth 2 setup
-// const credentials = {
-//   client: {
-//     id: '1440877326102459',
-//     secret: '599c26ffa600287d78052c4bd9528b51'
-//   },
-//   auth: {
-//     tokenHost: 'https://api.instagram.com',
-//     tokenPath: '/oauth/access_token'
-//   },
-//   options: {
-//     bodyFormat: 'json',
-//     authorizationMethod: 'body'
-//   }
-//  };
 
-//  const oauth2 = new simpleOauth2.AuthorizationCode(credentials);
-
-// /* Get rid of, do it on the frontend */
-//  router.get('/redirect', (req, res) => {
-//   // // Generate a random state verification cookie.
-//   // const state = req.cookies.state || crypto.randomBytes(20).toString('hex');
-//   // // Allow unsecure cookies on localhost.
-//   // const secureCookie = req.get('host').indexOf('localhost:') !== 0;
-//   // res.cookie('state', state.toString(), {maxAge: 3600000, secure: secureCookie, httpOnly: true});
-//   const redirectUri = oauth2.authorizeURL({
-//     redirect_uri: `https://localhost:8080/instagram-callback`,
-//     scope: 'user_profile,user_media',
-//     //state: state
-//   });
-//   res.redirect(redirectUri);
-//   console.log(oauth2.authorizationCode)
-// });
 
 router.get(
   "/instagram-callback",

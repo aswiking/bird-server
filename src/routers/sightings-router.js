@@ -14,7 +14,7 @@ const router = express.Router();
 
 router.get(
   "/api/sightings",
-  requireLogin, //make so only sightings from this user is shown
+  requireLogin,
   wrapAsync(async (req, res) => {
     const { rows: sightings } = await db.query(
       `SELECT sightings.id, sightings.bird_id, 
@@ -67,7 +67,7 @@ router.get(
   "/api/sightings/:sightingID",
   requireLogin,
   wrapAsync(async (req, res) => {
-    const { rows: sightingDetails } = await db.query(
+    const { rows: sightingDetails, rowCount: updatedCount } = await db.query(
       `SELECT sightings.id, sightings.bird_id, sightings.user_id, birds.common, birds.scientific, birds.uk_status, groups.name as group_common, groups.scientific as group_scientific, sightings.datetime, sightings.lat, sightings.lng, photos.id as photo_id, photos.instagram_media_id, sightings.notes 
       FROM sightings
       JOIN birds ON (sightings.bird_id = birds.id) 
@@ -76,6 +76,13 @@ router.get(
       WHERE (sightings.id = $1) AND (sightings.user_id = $2)`,
       [req.params.sightingID, req.user.id]
     );
+
+    if (updatedCount === 0) { //is this right?
+      throw {
+        status: 404,
+        messages: ["There is no sighting with this ID"]
+      };
+    }
 
     let sightingsWithPhotos;
 
