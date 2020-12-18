@@ -17,12 +17,16 @@ router.get(
   requireLogin, //make so only sightings from this user is shown
   wrapAsync(async (req, res) => {
     const { rows: sightings } = await db.query(
-      `SELECT sightings.id, sightings.bird_id, birds.common, birds.scientific, sightings.user_id, sightings.datetime, sightings.lat, sightings.lng, photos.id as photo_id, photos.instagram_media_id, sightings.notes 
+      `SELECT sightings.id, sightings.bird_id, 
+      birds.common, birds.scientific, 
+      sightings.user_id, sightings.datetime, sightings.lat, sightings.lng, sightings.notes,
+      photos.id as photo_id, photos.instagram_media_id
       FROM sightings 
       JOIN birds ON (sightings.bird_id = birds.id) 
       LEFT JOIN photos ON (photos.sighting_id = sightings.id)
+      WHERE (sightings.user_id = $1)
       ORDER BY sightings.datetime DESC 
-      LIMIT 5`
+      LIMIT 5`, [req.user.id]
     );
     const sightingsWithPhotos = [];
     sightings.forEach((sighting) => {
@@ -61,6 +65,7 @@ router.get(
 
 router.get(
   "/api/sightings/:sightingID",
+  requireLogin,
   wrapAsync(async (req, res) => {
     const { rows: sightingDetails } = await db.query(
       `SELECT sightings.id, sightings.bird_id, sightings.user_id, birds.common, birds.scientific, birds.uk_status, groups.name as group_common, groups.scientific as group_scientific, sightings.datetime, sightings.lat, sightings.lng, photos.id as photo_id, photos.instagram_media_id, sightings.notes 
@@ -68,8 +73,8 @@ router.get(
       JOIN birds ON (sightings.bird_id = birds.id) 
       JOIN groups ON (birds.group_id = groups.id)
       LEFT JOIN photos ON (photos.sighting_id = sightings.id)
-      WHERE sightings.id = $1`,
-      [req.params.sightingID]
+      WHERE (sightings.id = $1) AND (sightings.user_id = $2)`,
+      [req.params.sightingID, req.user.id]
     );
 
     let sightingsWithPhotos;

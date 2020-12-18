@@ -14,18 +14,18 @@ router.get(
     if (req.query.query) {
       const { rows: birds } = await db.query(
         `SELECT birds.id, birds.common, birds.scientific, birds.uk_status, 
-        groups.id AS group_id, groups.name AS group_name, groups.scientific AS group_scientific, 
+        groups.id AS "group:id", groups.name AS "group:name", groups.scientific AS "group:scientific", 
         sightings.id AS "sightings:id", sightings.datetime AS "sightings:datetime", sightings.lat AS "sightings:lat", sightings.lng AS "sightings:lng", sightings.notes AS "sightings:notes",
         photos.id AS "sightings:photos:id", photos.instagram_media_id AS "sightings:photos:instagram_media_id" 
         FROM birds 
         JOIN groups ON (birds.group_id = groups.id) 
-        LEFT JOIN sightings ON (birds.id = sightings.bird_id) 
+        LEFT JOIN sightings ON ((birds.id = sightings.bird_id) AND (sightings.user_id = $2)) 
         LEFT JOIN photos ON (photos.sighting_id = sightings.id)
         WHERE birds.common ILIKE $1
         OR birds.scientific ILIKE $1
         OR groups.name ILIKE $1
         ORDER BY groups.id ASC`,
-        [`%${req.query.query}%`]
+        [req.query.query, req.user.id]
       );
 
       const hydratedBirds = new Treeize();
@@ -54,14 +54,14 @@ router.get(
     } else {
       const { rows: birds } = await db.query(
         `SELECT birds.id, birds.common, birds.scientific, birds.uk_status, 
-        groups.id AS group_id, groups.name AS group_name, groups.scientific AS group_scientific, 
-        sightings.id AS "sightings:id", sightings.datetime AS "sightings:datetime", sightings.lat AS "sightings:lat", sightings.lng AS "sightings:lng", sightings.notes AS "sightings:notes",
+        groups.id AS "group:id", groups.name AS "group:name", groups.scientific AS "group:scientific", 
+        sightings.id AS "sightings:id", sightings.user_id AS "sightings:user_id", sightings.datetime AS "sightings:datetime", sightings.lat AS "sightings:lat", sightings.lng AS "sightings:lng", sightings.notes AS "sightings:notes",
         photos.id AS "sightings:photos:id", photos.instagram_media_id AS "sightings:photos:instagram_media_id" 
         FROM birds 
         JOIN groups ON (birds.group_id = groups.id) 
-        LEFT JOIN sightings ON (birds.id = sightings.bird_id) 
+        LEFT JOIN sightings ON ((birds.id = sightings.bird_id) AND (sightings.user_id = $1)) 
         LEFT JOIN photos ON (photos.sighting_id = sightings.id)
-        ORDER BY groups.id ASC`
+        ORDER BY groups.id ASC`, [req.user.id]
       );
       const hydratedBirds = new Treeize();
 
@@ -95,15 +95,15 @@ router.get(
   wrapAsync(async (req, res) => {
     const { rows: birdDetails } = await db.query(
       `SELECT birds.id, birds.common, birds.scientific, birds.uk_status, 
-      groups.id AS group_id, groups.name AS group_name, groups.scientific AS group_scientific, 
-      sightings.id AS "sightings:id", sightings.datetime AS "sightings:datetime", sightings.lat AS "sightings:lat", sightings.lng AS "sightings:lng", sightings.notes AS "sightings:notes",
+      groups.id AS "group:id", groups.name AS "group:name", groups.scientific AS "group:scientific", 
+      sightings.id AS "sightings:id", sightings.user_id AS "sightings:user_id", sightings.datetime AS "sightings:datetime", sightings.lat AS "sightings:lat", sightings.lng AS "sightings:lng", sightings.notes AS "sightings:notes",
       photos.id AS "sightings:photos:id", photos.instagram_media_id AS "sightings:photos:instagram_media_id" 
       FROM birds 
       JOIN groups ON (birds.group_id = groups.id) 
-      LEFT JOIN sightings ON (birds.id = sightings.bird_id) 
+      LEFT JOIN sightings ON ((birds.id = sightings.bird_id) AND (sightings.user_id = $2)) 
       LEFT JOIN photos ON (photos.sighting_id = sightings.id)
-      WHERE birds.id = $1`,
-        [req.params.birdID]
+      WHERE (birds.id = $1)`,
+        [req.params.birdID, req.user.id]
      )
 
      const hydratedBirds = new Treeize();
