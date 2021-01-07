@@ -1,14 +1,14 @@
 import express from "express";
 import validateSchema from "../validate-schema.js";
-import requireLogin from '../require-login.js'; 
+import requireLogin from "../require-login.js";
 import db from "../db.js";
 import wrapAsync from "../wrap-async.js";
 import {
   sightingsPostSchema,
   sightingsPutSchema,
 } from "../schema/sightings-schema.js";
-import pg from "pg";
 import format from "pg-format";
+import Treeize from "treeize";
 
 const router = express.Router();
 
@@ -17,49 +17,33 @@ router.get(
   requireLogin,
   wrapAsync(async (req, res) => {
     const { rows: sightings } = await db.query(
-      `SELECT sightings.id, sightings.bird_id, 
-      birds.common, birds.scientific, 
+      `SELECT sightings.id, 
       sightings.user_id, sightings.datetime, sightings.lat, sightings.lng, sightings.notes,
-      photos.id as photo_id, photos.instagram_media_id
+      photos.id AS "photos:id", photos.instagram_media_id AS "photos:instagram_media_id",
+      birds.id AS "bird:id", birds.common AS "bird:common", birds.scientific AS "bird:scientific",
+      groups.id AS "bird:group:id", groups.name AS "bird:group:name", groups.scientific AS "bird:group:scientific"
       FROM sightings 
       JOIN birds ON (sightings.bird_id = birds.id) 
+      JOIN groups ON (birds.group_id = groups.id) 
       LEFT JOIN photos ON (photos.sighting_id = sightings.id)
       WHERE (sightings.user_id = $1)
       ORDER BY sightings.datetime DESC 
-      LIMIT 5`, [req.user.id]
+      LIMIT 5`,
+      [req.user.id]
     );
-    const sightingsWithPhotos = [];
-    sightings.forEach((sighting) => {
-      const duplicate = sightingsWithPhotos.find(
-        ({ id }) => id === sighting.id
-      );
-      if (!duplicate) {
-        sightingsWithPhotos.push({
-          id: sighting.id,
-          bird_id: sighting.bird_id,
-          common: sighting.common,
-          scientific: sighting.scientific,
-          user_id: sighting.user_id,
-          datetime: sighting.datetime,
-          lat: sighting.lat,
-          lng: sighting.lng,
-          notes: sighting.notes,
-          photos: [
-            {
-              photo_id: sighting.photo_id,
-              instagram_media_id: sighting.instagram_media_id,
-            },
-          ],
-        });
-      } else {
-        duplicate.photos.push({
-          photo_id: sighting.photo_id,
-          instagram_media_id: sighting.instagram_media_id,
-        });
+
+    const hydratedSightings = new Treeize();
+
+    hydratedSightings.grow(sightings);
+
+    const fullSightings = hydratedSightings.getData().map((sighting) => {
+      if (!("photos" in sighting)) {
+        sighting.photos = [];
+        return sighting;
       }
     });
 
-    res.status(200).json(sightingsWithPhotos);
+    res.status(200).json(fullSightings);
   })
 );
 
@@ -68,55 +52,40 @@ router.get(
   requireLogin,
   wrapAsync(async (req, res) => {
     const { rows: sightingDetails, rowCount: updatedCount } = await db.query(
-      `SELECT sightings.id, sightings.bird_id, sightings.user_id, birds.common, birds.scientific, birds.uk_status, groups.name as group_common, groups.scientific as group_scientific, sightings.datetime, sightings.lat, sightings.lng, photos.id as photo_id, photos.instagram_media_id, sightings.notes 
-      FROM sightings
+      `SELECT sightings.id, 
+      sightings.user_id, sightings.datetime, sightings.lat, sightings.lng, sightings.notes,
+      photos.id AS "photos:id", photos.instagram_media_id AS "photos:instagram_media_id",
+      birds.id AS "bird:id", birds.common AS "bird:common", birds.scientific AS "bird:scientific",
+      groups.id AS "bird:group:id", groups.name AS "bird:group:name", groups.scientific AS "bird:group:scientific"
+      FROM sightings 
       JOIN birds ON (sightings.bird_id = birds.id) 
-      JOIN groups ON (birds.group_id = groups.id)
+      JOIN groups ON (birds.group_id = groups.id) 
       LEFT JOIN photos ON (photos.sighting_id = sightings.id)
       WHERE (sightings.id = $1) AND (sightings.user_id = $2)`,
       [req.params.sightingID, req.user.id]
     );
 
-    if (updatedCount === 0) { //is this right?
+    if (updatedCount === 0) {
       throw {
         status: 404,
-        messages: ["There is no sighting with this ID"]
+        messages: ["There is no sighting with this ID"],
       };
     }
 
-    let sightingsWithPhotos;
+    const hydratedSighting = new Treeize();
 
-    sightingDetails.forEach((sightingRow, index) => {
-      if (index === 0) {
-        sightingsWithPhotos = {
-          id: sightingRow.id,
-          bird_id: sightingRow.bird_id,
-          user_id: sightingRow.user_id,
-          common: sightingRow.common,
-          datetime: sightingRow.datetime,
-          group_common: sightingRow.group_common,
-          group_scientific: sightingRow.group_scientific,
-          photos: [
-            {
-              photo_id: sightingRow.photo_id,
-              instagram_media_id: sightingRow.instagram_media_id,
-            },
-          ],
-          lat: sightingRow.lat,
-          lng: sightingRow.lng,
-          notes: sightingRow.notes,
-          scientific: sightingRow.scientific,
-          uk_status: sightingRow.uk_status,
-        };
-      } else {
-        sightingsWithPhotos.photos.push({
-          photo_id: sightingRow.photo_id,
-          instagram_media_id: sightingRow.instagram_media_id,
-        });
-      }
-    });
+    hydratedSighting.grow(sightingDetails);
 
-    res.status(200).json(sightingsWithPhotos);
+    const fullSighting = hydratedSighting.getData()[0];
+
+    if (!("photos" in fullSighting)) {
+      console.log('no photos')
+      fullSighting.photos = [];
+    }
+
+    res.status(200).json(fullSighting);
+
+   
   })
 );
 
@@ -152,7 +121,7 @@ router.post(
       const query1 = format(
         `INSERT INTO photos (sighting_id, instagram_media_id 
       ) VALUES %L RETURNING sighting_id, instagram_media_id`,
-      formattedPhotos
+        formattedPhotos
       );
 
       let { rows: photos } = await db.query(query1);
@@ -234,10 +203,11 @@ router.put(
 router.delete(
   "/api/sightings/:sighting_id",
   wrapAsync(async (req, res) => {
-    const { rowCount: deleted } = await db.query(
-      `DELETE FROM sightings WHERE id = ($1)`,
-      [Number(req.params.sighting_id)]
-    );
+    const {
+      rowCount: deleted,
+    } = await db.query(`DELETE FROM sightings WHERE id = ($1)`, [
+      Number(req.params.sighting_id),
+    ]);
 
     if (deleted === 0) {
       throw {

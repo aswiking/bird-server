@@ -33,6 +33,7 @@ export default wrapAsync(async function(req, res, next) {
     // Token could be invalid
     try {
       const decodedToken = await admin.auth().verifyIdToken(token);
+      console.log(decodedToken)
       req.user = {
         id: decodedToken.uid,
         name: decodedToken.name,
