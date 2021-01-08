@@ -40,6 +40,8 @@ router.get(
       if (!("photos" in sighting)) {
         sighting.photos = [];
         return sighting;
+      } else {
+        return sighting;
       }
     });
 
@@ -140,6 +142,7 @@ router.put(
   validateSchema(sightingsPutSchema),
   wrapAsync(async (req, res) => {
     if (Number(req.params.sighting_id) !== req.validatedBody.id) {
+      console.log(req.params.sighting_id, req.validatedBody.id)
       throw {
         status: 400,
         messages: ["ID in url must match id in body"],

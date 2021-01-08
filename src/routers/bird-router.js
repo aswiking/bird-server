@@ -25,9 +25,9 @@ router.get(
         WHERE birds.common ILIKE $1
         OR birds.scientific ILIKE $1
         OR groups.name ILIKE $1
-        ORDER BY groups.id ASC`,
+        ORDER BY groups.id ASC, birds.id ASC, sightings.datetime DESC`,
         [req.query.query, req.user.id]
-      );
+      ); // make so returns only user's sightings
 
       const hydratedBirds = new Treeize();
 
@@ -50,7 +50,7 @@ router.get(
         }
       });
       res.status(200).json(fullBirds);
-      
+
     } else {
       const { rows: birds } = await db.query(
         `SELECT birds.id, birds.common, birds.scientific, birds.uk_status, 
@@ -61,7 +61,7 @@ router.get(
         JOIN groups ON (birds.group_id = groups.id) 
         LEFT JOIN sightings ON ((birds.id = sightings.bird_id) AND (sightings.user_id = $1)) 
         LEFT JOIN photos ON (photos.sighting_id = sightings.id)
-        ORDER BY groups.id ASC`,
+        ORDER BY groups.id ASC, birds.id ASC, sightings.datetime DESC`,
         [req.user.id]
       );
       const hydratedBirds = new Treeize();
@@ -103,7 +103,8 @@ router.get(
       JOIN groups ON (birds.group_id = groups.id) 
       LEFT JOIN sightings ON ((birds.id = sightings.bird_id) AND (sightings.user_id = $2)) 
       LEFT JOIN photos ON (photos.sighting_id = sightings.id)
-      WHERE (birds.id = $1)`,
+      WHERE (birds.id = $1)
+      ORDER BY groups.id ASC, birds.id ASC, sightings.datetime DESC`,
       [req.params.birdID, req.user.id]
     );
 
