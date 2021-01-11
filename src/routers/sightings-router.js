@@ -17,18 +17,20 @@ router.get(
   requireLogin,
   wrapAsync(async (req, res) => {
     const { rows: sightings } = await db.query(
-      `SELECT sightings.id, 
-      sightings.user_id, sightings.datetime, sightings.lat, sightings.lng, sightings.notes,
+      `SELECT sightings.id, sightings.user_id, sightings.datetime, sightings.lat, sightings.lng, sightings.notes,
       photos.id AS "photos:id", photos.instagram_media_id AS "photos:instagram_media_id",
       birds.id AS "bird:id", birds.common AS "bird:common", birds.scientific AS "bird:scientific",
       groups.id AS "bird:group:id", groups.name AS "bird:group:name", groups.scientific AS "bird:group:scientific"
-      FROM sightings 
+      FROM (
+        SELECT id FROM sightings WHERE (sightings.user_id = $1)
+        ORDER BY sightings.datetime DESC 
+        LIMIT 5
+      ) as s
+      JOIN sightings on sightings.id = s.id
       JOIN birds ON (sightings.bird_id = birds.id) 
       JOIN groups ON (birds.group_id = groups.id) 
       LEFT JOIN photos ON (photos.sighting_id = sightings.id)
-      WHERE (sightings.user_id = $1)
-      ORDER BY sightings.datetime DESC 
-      LIMIT 5`,
+      ORDER BY sightings.datetime DESC`,
       [req.user.id]
     );
 
@@ -115,7 +117,9 @@ router.post(
 
     const sightingID = sightings[0].id;
 
-    if (req.validatedBody.photos.length !== 0) {
+    console.log('req.validatedBody is', req.validatedBody)
+
+    if (req.validatedBody.photos) {
       const formattedPhotos = req.validatedBody.photos.map((photo) => {
         return [sightingID, photo.instagram_media_id];
       });
@@ -128,11 +132,40 @@ router.post(
 
       let { rows: photos } = await db.query(query1);
 
-      let sightingsObject = sightings[0];
+      const sightingsObject = {
+        id: sightings[0].id,
+        user_id: sightings[0].user_id,
+        datetime: sightings[0].datetime,
+        lat: sightings[0].lat,
+        lng: sightings[0].lng,
+        notes: sightings[0].notes,
+        photos: photos,
+        bird: {
+          id: sightings[0].bird_id,
+          common: sightings[0].common,
+          scientific: sightings[0].scientific
+        }
+      };
 
-      sightingsObject.photos = photos;
+      res.status(201).json(sightingsObject);
+    } else {
 
-      res.status(201).json(sightings[0]);
+      const sightingsObject = {
+        id: sightings[0].id,
+        user_id: sightings[0].user_id,
+        datetime: sightings[0].datetime,
+        lat: sightings[0].lat,
+        lng: sightings[0].lng,
+        notes: sightings[0].notes,
+        photos: [],
+        bird: {
+          id: sightings[0].bird_id,
+          common: sightings[0].common,
+          scientific: sightings[0].scientific
+        }
+      };
+
+      res.status(201).json(sightingsObject)
     }
   })
 );
