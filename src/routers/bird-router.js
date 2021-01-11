@@ -26,7 +26,7 @@ router.get(
         OR birds.scientific ILIKE $1
         OR groups.name ILIKE $1
         ORDER BY groups.id ASC, birds.id ASC, sightings.datetime DESC`,
-        [req.query.query, req.user.id]
+        [`%${req.query.query}%`, req.user.id]
       ); // make so returns only user's sightings
 
       const hydratedBirds = new Treeize();
