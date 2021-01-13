@@ -102,7 +102,8 @@ router.post(
         (INSERT INTO sightings (bird_id, user_id, datetime, lat, lng, notes) 
           VALUES ( $1, $2, $3, $4, $5, $6) 
           RETURNING bird_id, user_id, datetime, lat, lng, notes, id)
-      SELECT sighting.id, sighting.bird_id, birds.common, birds.scientific, sighting.user_id, sighting.datetime, sighting.lat, sighting.lng, sighting.notes
+      SELECT sighting.id, sighting.bird_id, sighting.user_id, sighting.datetime, sighting.lat, sighting.lng, sighting.notes,
+      birds.common, birds.scientific
       FROM sighting
       JOIN birds ON (sighting.bird_id = birds.id)`,
       [
@@ -114,12 +115,14 @@ router.post(
         req.validatedBody.notes,
       ]
     );
+    // ?? this request is giving me an error, but the sighting does get posted and the res looks okay
 
     const sightingID = sightings[0].id;
 
     console.log('req.validatedBody is', req.validatedBody)
+    console.log("res is", sightings[0])
 
-    if (req.validatedBody.photos) {
+    if (req.validatedBody.photos.length) {
       const formattedPhotos = req.validatedBody.photos.map((photo) => {
         return [sightingID, photo.instagram_media_id];
       });
@@ -239,6 +242,7 @@ router.put(
 router.delete(
   "/api/sightings/:sighting_id",
   wrapAsync(async (req, res) => {
+    console.log(req.params.sighting_id)
     const {
       rowCount: deleted,
     } = await db.query(`DELETE FROM sightings WHERE id = ($1)`, [
