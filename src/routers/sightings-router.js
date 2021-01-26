@@ -115,7 +115,6 @@ router.post(
         req.validatedBody.notes,
       ]
     );
-    // ?? this request is giving me an error, but the sighting does get posted and the res looks okay
 
     const sightingID = sightings[0].id;
 
