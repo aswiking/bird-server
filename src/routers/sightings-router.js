@@ -69,8 +69,6 @@ router.get(
       [req.params.sightingID, req.user.id]
     );
 
-    console.log("sightingDetails", sightingDetails)
-
     if (updatedCount === 0) {
       throw {
         status: 404,
@@ -82,7 +80,6 @@ router.get(
 
     hydratedSighting.grow(sightingDetails);
 
-    console.log("hydratedSighting", hydratedSighting.getData())
 
     const fullSighting = hydratedSighting.getData()[0];
 
@@ -92,7 +89,6 @@ router.get(
     }
 
     res.status(200).json(fullSighting);
-
    
   })
 );
@@ -122,9 +118,6 @@ router.post(
 
     const sightingID = sightings[0].id;
 
-    console.log('req.validatedBody is', req.validatedBody)
-    console.log("res is", sightings[0])
-
     if (req.validatedBody.photos.length) {
       const formattedPhotos = req.validatedBody.photos.map((photo) => {
         return [sightingID, photo];
@@ -152,8 +145,6 @@ router.post(
           scientific: sightings[0].scientific
         }
       };
-
-      console.log("sightingsObject", sightingsObject)
 
       res.status(201).json(sightingsObject);
     } else {
@@ -183,7 +174,6 @@ router.put(
   validateSchema(sightingsPutSchema),
   wrapAsync(async (req, res) => {
     if (Number(req.params.sighting_id) !== req.validatedBody.id) {
-      console.log(req.params.sighting_id, req.validatedBody.id)
       throw {
         status: 400,
         messages: ["ID in url must match id in body"],
@@ -205,8 +195,6 @@ router.put(
       ]
     );
 
-    console.log("validated body", req.validatedBody)
-
     if (updatedCount === 0) {
       throw {
         status: 404,
@@ -223,9 +211,10 @@ router.put(
     let sightingsObject = sightings[0];
     let photoDetails;
 
-    if (req.validatedBody.photos.length !== 0) {
+
+    if (req.validatedBody.photos.length !== 0) { //if there are images
       const images = req.validatedBody.photos.map((image) => {
-        return [req.validatedBody.id, image.instagram_media_id];
+        return [req.validatedBody.id, image];
       });
 
       const query = format(
@@ -239,6 +228,8 @@ router.put(
     }
 
     sightingsObject.photos = photoDetails;
+
+    console.log("sightingsObject", sightingsObject);
 
     res.status(200).json(sightingsObject);
   })
