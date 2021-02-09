@@ -28,6 +28,7 @@ router.get(
         ORDER BY groups.id ASC, birds.id ASC, sightings.datetime DESC`,
         [`%${req.query.query}%`, req.user.id]
       ); // make so returns only user's sightings
+      // this seems to work already!
 
       const hydratedBirds = new Treeize();
 

@@ -17,14 +17,14 @@ router.get(
   requireLogin,
   wrapAsync(async (req, res) => {
     const { rows: sightings } = await db.query(
-      `SELECT sightings.id, sightings.user_id, sightings.datetime, sightings.lat, sightings.lng, sightings.notes,
+      `SELECT sightings.id AS "id*", sightings.user_id, sightings.datetime, sightings.lat, sightings.lng, sightings.notes,
       photos.id AS "photos:id", photos.instagram_media_id AS "photos:instagram_media_id",
       birds.id AS "bird:id", birds.common AS "bird:common", birds.scientific AS "bird:scientific",
       groups.id AS "bird:group:id", groups.name AS "bird:group:name", groups.scientific AS "bird:group:scientific"
       FROM (
         SELECT id FROM sightings WHERE (sightings.user_id = $1)
         ORDER BY sightings.datetime DESC 
-        LIMIT 5
+        LIMIT 6
       ) as s
       JOIN sightings on sightings.id = s.id
       JOIN birds ON (sightings.bird_id = birds.id) 
@@ -56,7 +56,7 @@ router.get(
   requireLogin,
   wrapAsync(async (req, res) => {
     const { rows: sightingDetails, rowCount: updatedCount } = await db.query(
-      `SELECT sightings.id, 
+      `SELECT sightings.id AS "id*", 
       sightings.user_id, sightings.datetime, sightings.lat, sightings.lng, sightings.notes,
       photos.id AS "photos:id", photos.instagram_media_id AS "photos:instagram_media_id",
       birds.id AS "bird:id", birds.common AS "bird:common", birds.scientific AS "bird:scientific",
@@ -69,6 +69,8 @@ router.get(
       [req.params.sightingID, req.user.id]
     );
 
+    console.log("sightingDetails", sightingDetails)
+
     if (updatedCount === 0) {
       throw {
         status: 404,
@@ -79,6 +81,8 @@ router.get(
     const hydratedSighting = new Treeize();
 
     hydratedSighting.grow(sightingDetails);
+
+    console.log("hydratedSighting", hydratedSighting.getData())
 
     const fullSighting = hydratedSighting.getData()[0];
 
@@ -123,7 +127,7 @@ router.post(
 
     if (req.validatedBody.photos.length) {
       const formattedPhotos = req.validatedBody.photos.map((photo) => {
-        return [sightingID, photo.instagram_media_id];
+        return [sightingID, photo];
       });
 
       const query1 = format(
@@ -148,6 +152,8 @@ router.post(
           scientific: sightings[0].scientific
         }
       };
+
+      console.log("sightingsObject", sightingsObject)
 
       res.status(201).json(sightingsObject);
     } else {
@@ -199,6 +205,8 @@ router.put(
       ]
     );
 
+    console.log("validated body", req.validatedBody)
+
     if (updatedCount === 0) {
       throw {
         status: 404,
@@ -232,8 +240,6 @@ router.put(
 
     sightingsObject.photos = photoDetails;
 
-    console.log("Sightings object", sightingsObject);
-
     res.status(200).json(sightingsObject);
   })
 );
@@ -241,7 +247,6 @@ router.put(
 router.delete(
   "/api/sightings/:sighting_id",
   wrapAsync(async (req, res) => {
-    console.log(req.params.sighting_id)
     const {
       rowCount: deleted,
     } = await db.query(`DELETE FROM sightings WHERE id = ($1)`, [
