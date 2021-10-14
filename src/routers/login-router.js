@@ -46,6 +46,12 @@ router.post(
     );
     const resultA = await responseA.json();
     const shortAccessToken = resultA.access_token;
+    console.log(resultA)
+
+    // const userNameResponse = await fetch(
+    //   `https://graph.instagram.com//me?fields=username&access_token=${shortAccessToken}`
+    // );
+    // console.log(userNameResponse)
 
     // exchange for long-lived token
 
@@ -54,6 +60,7 @@ router.post(
     );
     const resultB = await responseB.json();
     const longAccessToken = resultB.access_token;
+    console.log(resultB);
 
     const instagramUserID = String(resultA.user_id);
     const customToken = await admin.auth().createCustomToken(instagramUserID);
