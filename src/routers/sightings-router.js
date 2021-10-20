@@ -1,7 +1,6 @@
 import express from "express";
 import validateSchema from "../validate-schema.js";
 import requireLogin from "../require-login.js";
-import db from "../db.js";
 import wrapAsync from "../wrap-async.js";
 import {
   sightingsPostSchema,
@@ -9,6 +8,18 @@ import {
 } from "../schema/sightings-schema.js";
 import format from "pg-format";
 import Treeize from "treeize";
+import { Client } from "pg";
+
+
+const client = new Client({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+
+client.connect();
+
 
 const router = express.Router();
 
@@ -16,7 +27,7 @@ router.get(
   "/api/sightings",
   requireLogin,
   wrapAsync(async (req, res) => {
-    const { rows: sightings } = await db.query(
+    const { rows: sightings } = await client.query(
       `SELECT sightings.id AS "id*", sightings.user_id, sightings.datetime, sightings.lat, sightings.lng, sightings.notes,
       photos.id AS "photos:id", photos.instagram_media_id AS "photos:instagram_media_id",
       birds.id AS "bird:id", birds.common AS "bird:common", birds.scientific AS "bird:scientific",
@@ -55,7 +66,7 @@ router.get(
   "/api/sightings/:sightingID",
   requireLogin,
   wrapAsync(async (req, res) => {
-    const { rows: sightingDetails, rowCount: updatedCount } = await db.query(
+    const { rows: sightingDetails, rowCount: updatedCount } = await client.query(
       `SELECT sightings.id AS "id*", 
       sightings.user_id, sightings.datetime, sightings.lat, sightings.lng, sightings.notes,
       photos.id AS "photos:id", photos.instagram_media_id AS "photos:instagram_media_id",
@@ -97,7 +108,7 @@ router.post(
   "/api/sightings",
   validateSchema(sightingsPostSchema),
   wrapAsync(async (req, res) => {
-    const { rows: sightings } = await db.query(
+    const { rows: sightings } = await client.query(
       `WITH sighting as 
         (INSERT INTO sightings (bird_id, user_id, datetime, lat, lng, notes) 
           VALUES ( $1, $2, $3, $4, $5, $6) 
@@ -129,7 +140,7 @@ router.post(
         formattedPhotos
       );
 
-      let { rows: photos } = await db.query(query1);
+      let { rows: photos } = await client.query(query1);
 
       const sightingsObject = {
         id: sightings[0].id,
@@ -180,7 +191,7 @@ router.put(
       };
     }
 
-    const { rows: sightings, rowCount: updatedCount } = await db.query(
+    const { rows: sightings, rowCount: updatedCount } = await client.query(
       `UPDATE sightings
     SET bird_id = ($1), datetime = ($2), lat = ($3), lng = ($4), notes = ($5)
     WHERE id = ($6)
@@ -202,7 +213,7 @@ router.put(
       };
     }
 
-    await db.query(
+    await client.query(
       `DELETE FROM photos
       WHERE sighting_id = ($1)`,
       [Number(req.validatedBody.id)]
@@ -222,7 +233,7 @@ router.put(
           ) VALUES %L RETURNING sighting_id, instagram_media_id`,
         images
       );
-      let { rows: photoRows } = await db.query(query);
+      let { rows: photoRows } = await client.query(query);
 
       photoDetails = photoRows;
     }
@@ -240,7 +251,7 @@ router.delete(
   wrapAsync(async (req, res) => {
     const {
       rowCount: deleted,
-    } = await db.query(`DELETE FROM sightings WHERE id = ($1)`, [
+    } = await client.query(`DELETE FROM sightings WHERE id = ($1)`, [
       Number(req.params.sighting_id),
     ]);
 
