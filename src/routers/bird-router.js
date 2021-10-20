@@ -1,18 +1,8 @@
 import express from "express";
 import requireLogin from "../require-login.js";
+import db from "../db.js";
 import wrapAsync from "../wrap-async.js";
 import Treeize from "treeize";
-import { Client } from "pg";
-
-
-const client = new Client({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
-
-client.connect();
 
 //catch errors for when bird id doesn't exist
 
@@ -23,7 +13,7 @@ router.get(
   requireLogin,
   wrapAsync(async (req, res) => {
     if (req.query.query) {
-      const { rows: birds } = await client.query(
+      const { rows: birds } = await db.query(
         `SELECT birds.id, birds.common, birds.scientific, birds.uk_status, 
         groups.id AS "group:id", groups.name AS "group:name", groups.scientific AS "group:scientific", 
         sightings.id AS "sightings:id", sightings.datetime AS "sightings:datetime", sightings.lat AS "sightings:lat", sightings.lng AS "sightings:lng", sightings.notes AS "sightings:notes",
@@ -63,7 +53,7 @@ router.get(
       res.status(200).json(fullBirds);
 
     } else {
-      const { rows: birds } = await client.query(
+      const { rows: birds } = await db.query(
         `SELECT birds.id, birds.common, birds.scientific, birds.uk_status, 
         groups.id AS "group:id", groups.name AS "group:name", groups.scientific AS "group:scientific", 
         sightings.id AS "sightings:id", sightings.user_id AS "sightings:user_id", sightings.datetime AS "sightings:datetime", sightings.lat AS "sightings:lat", sightings.lng AS "sightings:lng", sightings.notes AS "sightings:notes",
@@ -105,7 +95,7 @@ router.get(
   "/api/birds/:birdID",
   requireLogin,
   wrapAsync(async (req, res) => {
-    const { rows: birdDetails, rowCount: updatedCount } = await client.query(
+    const { rows: birdDetails, rowCount: updatedCount } = await db.query(
       `SELECT birds.id, birds.common, birds.scientific, birds.uk_status, 
       groups.id AS "group:id", groups.name AS "group:name", groups.scientific AS "group:scientific", 
       sightings.id AS "sightings:id", sightings.user_id AS "sightings:user_id", sightings.datetime AS "sightings:datetime", sightings.lat AS "sightings:lat", sightings.lng AS "sightings:lng", sightings.notes AS "sightings:notes",
