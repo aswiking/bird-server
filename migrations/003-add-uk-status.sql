@@ -1,0 +1,2 @@
+ALTER TABLE birds
+ADD COLUMN uk_status TEXT;
