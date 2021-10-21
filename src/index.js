@@ -9,10 +9,14 @@ import fs from'fs';
 
 const app = express();
 
+let server;
+
+if (process.env.HTTPS) {
 const key = fs.readFileSync('key.pem');
 const cert = fs.readFileSync('cert.pem');
 
-const server = https.createServer({key: key, cert: cert }, app);
+ server = https.createServer({key: key, cert: cert }, app);
+} else { server = app;}
 
 app.use(express.json());
 
