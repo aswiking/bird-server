@@ -1,4 +1,5 @@
 import express from "express";
+import wrapAsync from "../wrap-async.js";
 import db from "../db.js";
 import qs from "qs";
 
