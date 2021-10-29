@@ -4,10 +4,10 @@ import qs from "qs";
 
 const router = express.Router();
 
-router.delete(
+router.get(
   "/api/delete-user",
   wrapAsync(async (req, res) => {
-console.log("req is", req)
+console.log("req is",req)
     //const jsonQuery = qs.parse(req)
 
 
