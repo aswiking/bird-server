@@ -8,7 +8,8 @@ const router = express.Router();
 router.get(
   "/api/delete-user",
   wrapAsync(async (req, res) => {
-console.log("req is",req)
+console.log("req.body is",req.body)
+console.log("req.query is",req.query)
     //const jsonQuery = qs.parse(req)
 
 
