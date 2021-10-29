@@ -4,6 +4,7 @@ import "./firebase.js";
 import sightingsRouter from "./routers/sightings-router.js";
 import birdRouter from "./routers/bird-router.js";
 import loginRouter from "./routers/login-router.js";
+import userDataDeletionRouter from "./routers/user-data-deletion-router.js";
 import errorHandlingMW from "./error-handling-mw.js";
 import fs from "fs";
 
@@ -27,6 +28,8 @@ app.use(loginRouter);
 app.use(sightingsRouter);
 
 app.use(birdRouter);
+
+app.use(userDataDeletionRouter);
 
 app.use((req, res, next) => {
   throw {
