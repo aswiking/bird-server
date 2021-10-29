@@ -12,6 +12,7 @@ router.get(
   "/api/birds",
   requireLogin,
   wrapAsync(async (req, res) => {
+    console.log("console log from bird router")
     if (req.query.query) {
       const { rows: birds } = await db.query(
         `SELECT birds.id, birds.common, birds.scientific, birds.uk_status, 
