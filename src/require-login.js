@@ -3,6 +3,8 @@ import wrapAsync from "./wrap-async.js";
 
 export default wrapAsync(async function(req, res, next) {
 
+  console.log("console log from require login")
+
     const authHeader = req.get('Authorization');
 
     if(!(authHeader)) {
