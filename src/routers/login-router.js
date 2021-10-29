@@ -17,7 +17,7 @@ router.get(
       {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `client_id=1440877326102459&client_secret=599c26ffa600287d78052c4bd9528b51&code=${req.query.code}&grant_type=authorization_code&redirect_uri=${process.env.DATABASE_URL || 'https://localhost:8080'}/instagram-callback`,
+        body: `client_id=1440877326102459&client_secret=599c26ffa600287d78052c4bd9528b51&code=${req.query.code}&grant_type=authorization_code&redirect_uri=${process.env.BACKEND_URL || 'https://localhost:8080'}/instagram-callback`,
       }
       //add if statement setting url variable depending on dev/production environment?
     );
@@ -42,7 +42,7 @@ router.post(
       {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `client_id=1440877326102459&client_secret=599c26ffa600287d78052c4bd9528b51&code=${code}&grant_type=authorization_code&redirect_uri=${(process.env.NODE_ENV === "production") ? 'https://aswiking-fledgling.netlify.app' : 'https://localhost:3000/'}`,
+        body: `client_id=1440877326102459&client_secret=599c26ffa600287d78052c4bd9528b51&code=${code}&grant_type=authorization_code&redirect_uri=${(process.env.NODE_ENV === "production") ? process.env.FRONTEND_URL : 'https://localhost:3000/'}`,
       }
     );
     const resultA = await responseA.json();
