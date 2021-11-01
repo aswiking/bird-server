@@ -12,6 +12,7 @@ const router = express.Router();
 router.get(
   "/instagram-callback",
   wrapAsync(async (req, res) => {
+    console.log('req.body is', req.body)
     const response = await fetch(
       "https://api.instagram.com/oauth/access_token",
       {
@@ -19,7 +20,6 @@ router.get(
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `client_id=1440877326102459&client_secret=599c26ffa600287d78052c4bd9528b51&code=${req.query.code}&grant_type=authorization_code&redirect_uri=${process.env.BACKEND_URL || 'https://localhost:8080'}/instagram-callback`,
       }
-      //add if statement setting url variable depending on dev/production environment?
     );
     const result = await response.json();
     console.log(result);
