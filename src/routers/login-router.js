@@ -33,7 +33,7 @@ router.get(
 );
 
 router.post(
-  "/api/login/instagram",
+  "/api/login/instagram", //receives parsed.code from frontend and return instagramToken, which is then used to autorise with Firebase at frontend
 
   wrapAsync(async (req, res) => {
     const code = req.body.code;
