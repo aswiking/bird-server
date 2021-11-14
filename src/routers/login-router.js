@@ -37,6 +37,7 @@ router.post(
 
   wrapAsync(async (req, res) => {
     const code = req.body.code;
+    console.log("Frontend URL:", process.env.FRONTEND_URL)
     const responseA = await fetch(
       "https://api.instagram.com/oauth/access_token",
       {
