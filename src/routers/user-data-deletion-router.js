@@ -5,7 +5,7 @@ import qs from "qs";
 
 const router = express.Router();
 
-router.get(
+router.post(
   "/api/instagram-data-delete-callback",
   wrapAsync(async (req, res) => {
 console.log("req.body is",req.body)
