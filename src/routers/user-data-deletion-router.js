@@ -10,7 +10,7 @@ router.post(
   wrapAsync(async (req, res) => {
 console.log("req.body is",req.body)
 console.log("req.query is",req.query)
-console.log("req.user_id is", req.uid)
+console.log("req is", req)
 
     //const jsonQuery = qs.parse(req)
 
