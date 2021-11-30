@@ -16,6 +16,7 @@ router.get(
   "/api/sightings",
   requireLogin,
   wrapAsync(async (req, res) => {
+    console.log('sightings request come in')
     const { rows: sightings } = await db.query(
       `SELECT sightings.id AS "id*", sightings.user_id, sightings.datetime, sightings.lat, sightings.lng, sightings.notes,
       photos.id AS "photos:id", photos.instagram_media_id AS "photos:instagram_media_id",
